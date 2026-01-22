@@ -1,18 +1,7 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Check if env vars are defined
-if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-  console.error('❌ Missing EMAIL_USER or EMAIL_PASSWORD environment variables');
-}
-
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   // Enable CORS
@@ -32,21 +21,19 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
   // Validate input
   if (!name || !email || !phone || !subject || !message) {
-    console.error('❌ Missing required fields:', { name: !!name, email: !!email, phone: !!phone, subject: !!subject, message: !!message });
     return res.status(400).json({ error: 'All fields are required' });
   }
 
   // Check environment variables
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-    console.error('❌ Email credentials not configured');
-    return res.status(500).json({ error: 'Server is not configured properly' });
+  if (!process.env.RESEND_API_KEY) {
+    console.error('❌ RESEND_API_KEY not configured');
+    return res.status(500).json({ error: 'Email service not configured' });
   }
 
   try {
-    console.log('📧 Sending email from:', process.env.EMAIL_USER);
-    // Email to admin
-    const adminMailOptions = {
-      from: process.env.EMAIL_USER,
+    // Send email to admin
+    await resend.emails.send({
+      from: 'noreply@netcraftstudio.com',
       to: 'netcraftstudio01@gmail.com',
       subject: `New Contact Form Submission: ${subject}`,
       html: `
@@ -58,11 +45,11 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         <p><strong>Message:</strong></p>
         <p>${message}</p>
       `,
-    };
+    });
 
-    // Email to user
-    const userMailOptions = {
-      from: process.env.EMAIL_USER,
+    // Send email to user
+    await resend.emails.send({
+      from: 'noreply@netcraftstudio.com',
       to: email,
       subject: 'We received your message - NetCraft Studio',
       html: `
@@ -74,11 +61,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         <hr>
         <p>Best regards,<br>NetCraft Studio Team</p>
       `,
-    };
-
-    // Send both emails
-    await transporter.sendMail(adminMailOptions);
-    await transporter.sendMail(userMailOptions);
+    });
 
     res.status(200).json({ success: true, message: 'Email sent successfully' });
   } catch (error) {
