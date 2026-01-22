@@ -1,6 +1,11 @@
 import nodemailer from 'nodemailer';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// Check if env vars are defined
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+  console.error('❌ Missing EMAIL_USER or EMAIL_PASSWORD environment variables');
+}
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -10,6 +15,15 @@ const transporter = nodemailer.createTransport({
 });
 
 export default async (req: VercelRequest, res: VercelResponse) => {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -18,10 +32,18 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
   // Validate input
   if (!name || !email || !phone || !subject || !message) {
+    console.error('❌ Missing required fields:', { name: !!name, email: !!email, phone: !!phone, subject: !!subject, message: !!message });
     return res.status(400).json({ error: 'All fields are required' });
   }
 
+  // Check environment variables
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    console.error('❌ Email credentials not configured');
+    return res.status(500).json({ error: 'Server is not configured properly' });
+  }
+
   try {
+    console.log('📧 Sending email from:', process.env.EMAIL_USER);
     // Email to admin
     const adminMailOptions = {
       from: process.env.EMAIL_USER,
