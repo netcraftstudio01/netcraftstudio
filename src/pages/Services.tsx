@@ -1,5 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
 import servicesBg from "@/assets/services-bg.jpg";
@@ -12,64 +13,100 @@ import {
   Palette,
   Code,
   Database,
+  Briefcase,
+  Monitor,
 } from "lucide-react";
 
-const services = [
+interface Service {
+  icon: typeof Globe;
+  title: string;
+  description: string;
+  features: string[];
+  slug: string;
+  click: string;
+}
+
+const services: Service[] = [
   {
     icon: Globe,
     title: "Web Development",
     description:
-      "Custom websites and web applications built with cutting-edge technologies. From e-commerce platforms to enterprise solutions.",
-    features: ["React & Next.js", "Node.js Backend", "API Development", "SEO Optimization"],
+      "Custom websites and web applications built with cutting-edge technologies. From e-commerce platforms to enterprise solutions, we create responsive, scalable web experiences.",
+    features: ["React & Next.js", "Node.js Backend", "Responsive Design", "Performance Optimized"],
+    slug: "web-development",
+    click: "Click for more details",
   },
   {
     icon: Smartphone,
-    title: "Mobile Apps",
+    title: "App Development",
     description:
-      "Native and cross-platform mobile applications that deliver exceptional user experiences on iOS and Android.",
-    features: ["React Native", "iOS Development", "Android Apps", "App Store Deployment"],
-  },
-  {
-    icon: Brain,
-    title: "AI Solutions",
-    description:
-      "Harness the power of artificial intelligence with custom ML models, chatbots, and intelligent automation systems.",
-    features: ["Machine Learning", "NLP Solutions", "Computer Vision", "AI Integration"],
-  },
-  {
-    icon: Cloud,
-    title: "Cloud Services",
-    description:
-      "Scalable cloud infrastructure and DevOps solutions that grow with your business and ensure 99.9% uptime.",
-    features: ["AWS & Azure", "Docker & Kubernetes", "CI/CD Pipelines", "Serverless Architecture"],
-  },
-  {
-    icon: Shield,
-    title: "Cybersecurity",
-    description:
-      "Protect your digital assets with comprehensive security audits, penetration testing, and secure architecture design.",
-    features: ["Security Audits", "Penetration Testing", "Compliance", "Incident Response"],
+      "Native and cross-platform mobile applications that deliver exceptional user experiences on iOS and Android with intuitive interfaces and powerful functionality.",
+    features: ["React Native", "iOS/Android", "Cross-Platform", "App Store Ready"],
+    slug: "app-development",
+    click: "Click for more details",
   },
   {
     icon: Palette,
     title: "UI/UX Design",
     description:
-      "Beautiful, intuitive designs that convert visitors into customers. User research, wireframes, and prototypes included.",
+      "Beautiful, intuitive designs that convert visitors into customers. User research, wireframes, prototypes, and complete design systems tailored to your brand.",
     features: ["User Research", "Wireframing", "Prototyping", "Design Systems"],
+    slug: "ui-ux-design",
+    click: "Click for more details",
   },
   {
     icon: Code,
-    title: "Custom Software",
+    title: "Website Restructuring",
     description:
-      "Bespoke software solutions tailored to your unique business requirements and operational workflows.",
-    features: ["Enterprise Software", "SaaS Development", "Legacy Modernization", "Integration"],
+      "Modernize and optimize your existing website with improved architecture, performance, and user experience. We rebuild legacy sites into powerful digital assets.",
+    features: ["Performance Audit", "Architecture Redesign", "Migration Support", "SEO Optimization"],
+    slug: "website-restructuring",
+    click: "Click for more details",
+  },
+  {
+    icon: Briefcase,
+    title: "Product Development",
+    description:
+      "From concept to launch, we develop innovative digital products tailored to market needs. Full-stack solutions with scalability, security, and user-centric design.",
+    features: ["Product Strategy", "MVP Development", "Scaling & Growth", "Market Ready"],
+    slug: "product-development",
+    click: "Click for more details",
+  },
+  {
+    icon: Brain,
+    title: "Automation Solutions",
+    description:
+      "Streamline your business processes with intelligent automation. Reduce manual work, increase efficiency, and focus on what matters with smart automation systems.",
+    features: ["Workflow Automation", "Process Optimization", "AI Integration", "Custom Tools"],
+    slug: "automation-solutions",
+    click: "Click for more details",
+  },
+  {
+    icon: Cloud,
+    title: "Internet of Things",
+    description:
+      "Connect your devices and systems with IoT solutions that enable real-time monitoring, data collection, and intelligent decision-making across your operations.",
+    features: ["IoT Architecture", "Device Integration", "Data Streaming", "Real-time Analytics"],
+    slug: "internet-of-things",
+    click: "Click for more details",
   },
   {
     icon: Database,
-    title: "Data Engineering",
+    title: "Data Digitalization",
     description:
-      "Transform raw data into actionable insights with modern data pipelines, warehouses, and analytics platforms.",
-    features: ["Data Pipelines", "Analytics", "Visualization", "Real-time Processing"],
+      "Transform your data into actionable insights with modern digitalization. From legacy data migration to analytics platforms, we unlock the power of your data.",
+    features: ["Data Migration", "Analytics Platforms", "Data Visualization", "Insights Engine"],
+    slug: "data-digitalization",
+    click: "Click for more details",
+  },
+  {
+    icon: Monitor,
+    title: "Desktop Application",
+    description:
+      "Powerful desktop applications for Windows, macOS, and Linux. Built with modern frameworks for performance, reliability, and seamless user experiences on all platforms.",
+    features: ["Cross-Platform", "Electron/Tauri", "Native Performance", "Offline Capability"],
+    slug: "desktop-application",
+    click: "Click for more details",
   },
 ];
 
@@ -77,9 +114,10 @@ const ServiceCard = ({
   service,
   index,
 }: {
-  service: (typeof services)[0];
+  service: Service;
   index: number;
 }) => {
+  const navigate = useNavigate();
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -98,32 +136,47 @@ const ServiceCard = ({
     <motion.div
       ref={ref}
       style={{ opacity, x, scale }}
-      className="gta-card p-8 group"
+      className="gta-card p-4 sm:p-6 md:p-8 group cursor-pointer hover:shadow-[0_0_30px_hsl(276_100%_50%_/_0.3)] transition-all duration-300"
+      onClick={() => navigate(`/service/${service.slug}`)}
     >
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8 items-start">
         <div className="flex-shrink-0">
-          <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-            <service.icon className="w-10 h-10 text-primary group-hover:text-secondary transition-colors" />
+          <div className="w-14 sm:w-16 md:w-20 h-14 sm:h-16 md:h-20 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <service.icon className="w-6 sm:w-8 md:w-10 h-6 sm:h-8 md:h-10 text-primary group-hover:text-secondary transition-colors" />
           </div>
         </div>
 
-        <div className="flex-1 space-y-4">
-          <h3 className="font-display text-2xl md:text-3xl text-foreground group-hover:gta-title transition-all duration-300">
+        <div className="flex-1 space-y-3 sm:space-y-4">
+          <h3 className="font-display text-lg sm:text-xl md:text-2xl lg:text-3xl text-foreground group-hover:gta-title transition-all duration-300">
             {service.title}
           </h3>
-          <p className="text-muted-foreground font-body text-lg leading-relaxed">
+          <p className="text-muted-foreground font-body text-sm sm:text-base md:text-lg leading-relaxed">
             {service.description}
           </p>
           <div className="flex flex-wrap gap-2 pt-2">
             {service.features.map((feature) => (
               <span
                 key={feature}
-                className="px-3 py-1 text-sm font-body bg-primary/10 text-primary rounded-full border border-primary/20"
+                className="px-2 sm:px-3 py-1 text-xs sm:text-sm font-body bg-primary/10 text-primary rounded-full border border-primary/20"
               >
                 {feature}
               </span>
             ))}
           </div>
+          <motion.div
+            className="pt-2 sm:pt-4"
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <motion.button
+              animate={{ color: ["hsl(276 100% 50%)", "hsl(180 100% 50%)", "hsl(276 100% 50%)"] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="font-display font-semibold text-sm sm:text-base hover:text-secondary transition-colors flex items-center gap-2 group/btn"
+            >
+              {service.click}
+              <span className="group-hover/btn:translate-x-1 transition-transform">→</span>
+            </motion.button>
+          </motion.div>
         </div>
       </div>
     </motion.div>
@@ -139,7 +192,7 @@ const Services = () => {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="hero-section min-h-[70vh]">
+      <section className="hero-section min-h-[50vh] sm:min-h-[60vh] md:min-h-[70vh] lg:min-h-[80vh] py-8 sm:py-12 md:py-16 pt-24 sm:pt-32 md:pt-40 flex items-center">
         <div className="absolute inset-0 z-0">
           <img
             src={servicesBg}
@@ -149,38 +202,38 @@ const Services = () => {
         </div>
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-background/90 via-background/70 to-background" />
 
-        <div className="hero-content container mx-auto px-6 text-center">
+        <div className="hero-content container mx-auto px-3 sm:px-4 md:px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="space-y-6"
+            className="space-y-4 sm:space-y-6"
           >
             <motion.h1
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-5xl md:text-7xl font-display font-black gta-title"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-display font-black gta-title"
             >
               Our Services
             </motion.h1>
-            <p className="text-xl md:text-2xl text-foreground/80 font-body max-w-3xl mx-auto">
-              Comprehensive IT solutions designed to elevate your business to
-              new heights in the digital landscape.
+            <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-foreground/80 font-body max-w-4xl mx-auto leading-relaxed">
+              At NetCraft Studio, we deliver high-performance digital services built for speed, scalability, and impact. Our services are engineered to help businesses grow, adapt, and dominate in the digital space. Every solution is crafted with precision, powered by modern technology, and designed to perform flawlessly.<br /><br />
+              We don't follow trends—we build systems that last.
             </p>
           </motion.div>
         </div>
       </section>
 
       {/* Timeline Section */}
-      <section className="py-24 relative">
-        <div className="container mx-auto px-6">
+      <section className="py-16 md:py-24 relative">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="relative">
             {/* Timeline Line */}
             <div className="absolute left-4 lg:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-secondary to-accent" />
 
             {/* Services */}
-            <div className="space-y-12">
+            <div className="space-y-8 md:space-y-12">
               {services.map((service, index) => (
                 <div
                   key={service.title}

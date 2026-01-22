@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Github, Linkedin, Twitter, Instagram } from "lucide-react";
+import { Github, Linkedin, MessageCircle, Instagram } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const socialLinks = [
-    { icon: Twitter, href: "#", label: "Twitter" },
+    { icon: MessageCircle, href: "https://wa.me/918122696986", label: "WhatsApp" },
     { icon: Linkedin, href: "#", label: "LinkedIn" },
     { icon: Github, href: "#", label: "GitHub" },
     { icon: Instagram, href: "#", label: "Instagram" },
@@ -80,9 +80,9 @@ const Footer = () => {
           <p className="text-muted-foreground text-sm font-body">
             © {currentYear} NetCraft Studio. All rights reserved.
           </p>
-          <p className="text-muted-foreground text-sm font-body">
+          {/* <p className="text-muted-foreground text-sm font-body">
             Designed with <span className="text-accent">♥</span> in the Digital Age
-          </p>
+          </p> */}
         </div>
       </div>
     </footer>
