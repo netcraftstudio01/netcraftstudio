@@ -12,7 +12,8 @@ const PreviewSection = () => {
       icon: <Users className="w-8 h-8" />,
       link: "/about",
       imagePosition: "right" as const,
-      imageBg: "bg-gradient-to-br from-primary/20 to-secondary/20",
+      imageBg: "/img/about-us.jpg",
+      isImage: true,
     },
     {
       title: "Portfolio",
@@ -20,7 +21,8 @@ const PreviewSection = () => {
       icon: <FolderOpen className="w-8 h-8" />,
       link: "/portfolio",
       imagePosition: "left" as const,
-      imageBg: "bg-gradient-to-br from-accent/20 to-primary/20",
+      imageBg: "/img/port.png",
+      isImage: true,
     },
     {
       title: "Services",
@@ -28,7 +30,8 @@ const PreviewSection = () => {
       icon: <Briefcase className="w-8 h-8" />,
       link: "/services",
       imagePosition: "right" as const,
-      imageBg: "bg-gradient-to-br from-secondary/20 to-accent/20",
+      imageBg: "/img/service.jpg",
+      isImage: true,
     },
     {
       title: "Contact Us",
@@ -98,21 +101,25 @@ const PreviewSection = () => {
                       </Button>
                     </Link>
                   </div>
-                  <div className={`${section.imageBg} h-56 sm:h-64 md:h-80 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/10`}>
-                    <div className="text-center">
-                      <div className="text-4xl sm:text-5xl md:text-6xl opacity-50">{section.icon}</div>
-                      <p className="text-muted-foreground mt-2 sm:mt-4 text-xs sm:text-sm">Image Placeholder</p>
-                    </div>
+                  <div className={`${!section.isImage ? section.imageBg : 'bg-cover bg-center'} h-56 sm:h-64 md:h-80 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/10`} style={section.isImage ? { backgroundImage: `url(${section.imageBg})` } : {}}>
+                    {!section.isImage && (
+                      <div className="text-center">
+                        <div className="text-4xl sm:text-5xl md:text-6xl opacity-50">{section.icon}</div>
+                        <p className="text-muted-foreground mt-2 sm:mt-4 text-xs sm:text-sm">Image Placeholder</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
                 // Content Right, Image Left
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-center">
-                  <div className={`${section.imageBg} h-56 sm:h-64 md:h-80 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/10 order-2 md:order-1`}>
-                    <div className="text-center">
-                      <div className="text-4xl sm:text-5xl md:text-6xl opacity-50">{section.icon}</div>
-                      <p className="text-muted-foreground mt-2 sm:mt-4 text-xs sm:text-sm">Image Placeholder</p>
-                    </div>
+                  <div className={`${!section.isImage ? section.imageBg : 'bg-cover bg-center'} h-56 sm:h-64 md:h-80 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/10 order-2 md:order-1`} style={section.isImage ? { backgroundImage: `url(${section.imageBg})` } : {}}>
+                    {!section.isImage && (
+                      <div className="text-center">
+                        <div className="text-4xl sm:text-5xl md:text-6xl opacity-50">{section.icon}</div>
+                        <p className="text-muted-foreground mt-2 sm:mt-4 text-xs sm:text-sm">Image Placeholder</p>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-4 md:space-y-6 order-1 md:order-2">
                     <div className="flex items-center gap-3 md:gap-4">

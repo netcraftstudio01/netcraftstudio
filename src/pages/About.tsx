@@ -8,6 +8,11 @@ import aboutBg from "@/assets/about-bg.jpg";
 import themImage from "@/assets/team/me.jpg";
 import team1 from "@/assets/team/prasanth.jpeg";
 import team2 from "@/assets/team/gokul.jpeg";
+import team3 from "@/assets/team/dharneesh.jpg";
+import team4 from "@/assets/team/barath.jpg"
+import team5 from "@/assets/team/kavya.jpg"
+import team6 from "@/assets/team/keerthana.jpg"
+import team7 from "@/assets/team/sanjai.jpg"
 import { Users, Target, Rocket, Award } from "lucide-react";
 
 const teamMembers = [
@@ -24,7 +29,7 @@ const teamMembers = [
   {
     name: "Barath Nivash",
     role: "Backend Developer",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop",
+    image: team4,
   },
   {
     name: "Gokul",
@@ -32,24 +37,24 @@ const teamMembers = [
     image: team2,
   },
   {
-    name: "Sanjay",
+    name: "Sanjai Giri",
     role: "Full Stack Developer",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+    image: team7,
   },
   {
     name: "Dharneesh",
     role: "Java Developer",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop",
+    image: team3,
   },
   {
-    name: "Kavya Shree",
+    name: "Kaviya Shree",
     role: "Debug Engineer",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
+    image: team5,
   },
   {
     name: "Keerthana",
     role: "UI/UX Designer",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+    image: team6,
   },
 ];
 
