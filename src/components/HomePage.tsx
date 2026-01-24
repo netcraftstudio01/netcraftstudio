@@ -232,7 +232,7 @@ const HomePage = () => {
               className="font-display text-2xl font-bold"
               whileHover={{ scale: 1.05 }}
             >
-              <span className="text-tedx-red">TED<span className="text-lg">x</span></span>
+              <span className="text-tedx-red">TED<span className="text-lg -ml-1 -mt-1 inline-block align-text-top">x</span></span>
               <span className="text-foreground ml-2">KPRCAS</span>
             </motion.div>
 
@@ -378,8 +378,8 @@ const HomePage = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.1 }}
             >
-              <span className="text-tedx-red text-sm md:text-base font-body tracking-wide">
-                <span className="text-xs md:text-sm">X</span> = Independently organised TED event
+              <span className="text-tedx-red text-sm md:text-base font-body tracking-wide inline-flex items-start gap-1">
+                <span className="text-xs md:text-sm -mt-0.5 inline-block">X</span> = Independently organised TED event
               </span>
             </motion.div>
 
@@ -394,10 +394,10 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <div className="block mb-4">
+            <div className="block mb-4 leading-none">
               <span className="text-tedx-red animate-pulse-glow">TED</span>
               <motion.span 
-                className="text-foreground inline-block text-4xl md:text-5xl lg:text-6xl align-top"
+                className="text-foreground inline-block text-4xl md:text-5xl lg:text-6xl align-text-top -ml-2 -mt-2"
                 whileHover={{ rotate: 180, scale: 1.2 }}
                 transition={{ type: "spring", stiffness: 200 }}
               >
