@@ -1171,7 +1171,7 @@ const HomePage = () => {
             This independent TEDx event is operated under license from TED.
           </p>
           <p className="mt-2 text-muted-foreground/60 text-xs font-body">
-            © 2025 TEDxKPRCAS. All rights reserved.
+            © 2026 TEDxKPRCAS. All rights reserved.
           </p>
         </div>
       </footer>
