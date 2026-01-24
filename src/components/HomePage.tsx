@@ -1165,7 +1165,7 @@ const HomePage = () => {
             whileHover={{ scale: 1.05 }}
           >
             <span className="text-foreground">TED</span>
-            <span className="text-tedx-red text-xl -ml-1 relative" style={{top: '-3px'}}>X</span>
+            <span className="text-tedx-red text-xl relative" style={{top: '-11px'}}>X</span>
             <span className="text-foreground ml-2">KPRCAS</span>
           </motion.div>
           <p className="mt-4 text-muted-foreground text-sm font-body">
