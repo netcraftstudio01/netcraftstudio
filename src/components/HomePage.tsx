@@ -232,7 +232,7 @@ const HomePage = () => {
               className="font-display text-2xl font-bold"
               whileHover={{ scale: 1.05 }}
             >
-              <span className="text-tedx-red">TEDx</span>
+              <span className="text-tedx-red">TED<span className="text-lg">x</span></span>
               <span className="text-foreground ml-2">KPRCAS</span>
             </motion.div>
 
@@ -379,7 +379,7 @@ const HomePage = () => {
               transition={{ duration: 0.8, delay: 0.1 }}
             >
               <span className="text-tedx-red text-sm md:text-base font-body tracking-wide">
-                X = Independently organised TED event
+                <span className="text-xs md:text-sm">X</span> = Independently organised TED event
               </span>
             </motion.div>
 
@@ -397,7 +397,7 @@ const HomePage = () => {
             <div className="block mb-4">
               <span className="text-tedx-red animate-pulse-glow">TED</span>
               <motion.span 
-                className="text-foreground inline-block"
+                className="text-foreground inline-block text-4xl md:text-5xl lg:text-6xl align-top"
                 whileHover={{ rotate: 180, scale: 1.2 }}
                 transition={{ type: "spring", stiffness: 200 }}
               >
