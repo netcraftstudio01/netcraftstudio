@@ -215,10 +215,10 @@ const HomePage = () => {
   }, []);
 
   const speakers = [
-    { name: 'Dr. Sarah Chen', title: 'AI Researcher', image: '' },
-    { name: 'Marcus Williams', title: 'Climate Activist', image: '' },
-    { name: 'Priya Sharma', title: 'Entrepreneur', image: '' },
-    { name: 'Alex Rivera', title: 'Neuroscientist', image: '' },
+    { name: 'Speaker', title: 'AI Researcher', image: '' },
+    { name: 'Speaker', title: 'Climate Activist', image: '' },
+    { name: 'Speaker', title: 'Entrepreneur', image: '' },
+    { name: 'Speaker', title: 'Neuroscientist', image: '' },
   ];
 
   return (
