@@ -232,7 +232,7 @@ const HomePage = () => {
               className="font-display text-2xl font-bold"
               whileHover={{ scale: 1.05 }}
             >
-              <span className="text-tedx-red">TED<span className="text-lg -ml-1 -mt-1 inline-block align-text-top">x</span></span>
+              <span className="text-tedx-red">TED<span className="text-lg inline-block align-text-top relative" style={{top: '-4px'}}>x</span></span>
               <span className="text-foreground ml-2">KPRCAS</span>
             </motion.div>
 
@@ -379,7 +379,7 @@ const HomePage = () => {
               transition={{ duration: 0.8, delay: 0.1 }}
             >
               <span className="text-tedx-red text-sm md:text-base font-body tracking-wide inline-flex items-start gap-1">
-                <span className="text-xs md:text-sm -mt-0.5 inline-block">X</span> = Independently organised TED event
+                <span className="text-xs md:text-sm -mb-1.5 inline-block relative" style={{ top: '2px' }}>X</span> = Independently organised TED event
               </span>
             </motion.div>
 
@@ -394,10 +394,11 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <div className="block mb-4 leading-none">
+            <div className="block mb-4 leading-tight">
               <span className="text-tedx-red animate-pulse-glow">TED</span>
               <motion.span 
-                className="text-foreground inline-block text-4xl md:text-5xl lg:text-6xl align-text-top -ml-2 -mt-2"
+                className="text-foreground inline-block text-4xl md:text-5xl lg:text-6xl align-text-top -ml-3 -mb-3 relative" 
+                style={{top: '-8px'}}
                 whileHover={{ rotate: 180, scale: 1.2 }}
                 transition={{ type: "spring", stiffness: 200 }}
               >
@@ -1160,12 +1161,12 @@ const HomePage = () => {
 
         <div className="container mx-auto px-6 text-center relative z-10">
           <motion.div 
-            className="font-display text-2xl"
+            className="font-display text-2xl inline-flex items-center gap-0"
             whileHover={{ scale: 1.05 }}
           >
             <span className="text-foreground">TED</span>
-            <span className="text-tedx-red ml-2">X</span>
-            <span className="text-foreground">  KPRCAS</span>
+            <span className="text-tedx-red text-xl -ml-1 relative" style={{top: '-3px'}}>X</span>
+            <span className="text-foreground ml-2">KPRCAS</span>
           </motion.div>
           <p className="mt-4 text-muted-foreground text-sm font-body">
             This independent TEDx event is operated under license from TED.
