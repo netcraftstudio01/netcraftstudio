@@ -200,8 +200,8 @@ const LoadingScreen = ({ onLoadingComplete }: LoadingScreenProps) => {
                   
                   {/* X with dramatic entrance */}
                   <motion.span
-                    className="font-display text-4xl md:text-5xl lg:text-6xl text-foreground inline-block relative align-text-top -ml-3 -mb-3"
-                    style={{top: '-8px'}}
+                    className="font-display text-4xl md:text-5xl lg:text-6xl text-foreground inline-block relative align-text-top"
+                    style={{top: '-40px'}}
                     initial={{ 
                       opacity: 0, 
                       scale: 0, 
