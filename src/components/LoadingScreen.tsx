@@ -159,45 +159,7 @@ const LoadingScreen = ({ onLoadingComplete }: LoadingScreenProps) => {
 
           {/* Main content */}
           <div className="relative z-10 text-center perspective-1000">
-            {/* KPRCAS */}
-            <motion.div
-              className="flex justify-center mb-4 overflow-hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: phase !== 'initial' ? 1 : 0 }}
-            >
-              {kprcasLetters.map((letter, index) => (
-                <motion.span
-                  key={index}
-                  className="font-display text-5xl md:text-7xl lg:text-8xl text-foreground tracking-wider inline-block"
-                  initial={{ 
-                    opacity: 0, 
-                    y: 100, 
-                    rotateX: -90,
-                    filter: 'blur(10px)',
-                  }}
-                  animate={phase !== 'initial' ? { 
-                    opacity: 1, 
-                    y: 0, 
-                    rotateX: 0,
-                    filter: 'blur(0px)',
-                  } : {}}
-                  transition={{
-                    duration: 0.6,
-                    delay: index * 0.1,
-                    ease: [0.25, 0.46, 0.45, 0.94],
-                  }}
-                  whileHover={{
-                    scale: 1.2,
-                    color: 'hsl(352, 100%, 46%)',
-                    transition: { duration: 0.2 }
-                  }}
-                >
-                  {letter}
-                </motion.span>
-              ))}
-            </motion.div>
-
-            {/* TED X */}
+             {/* TED X */}
             <AnimatePresence>
               {phase === 'tedx' && (
                 <motion.div
@@ -300,6 +262,46 @@ const LoadingScreen = ({ onLoadingComplete }: LoadingScreenProps) => {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* KPRCAS */}
+            <motion.div
+              className="flex justify-center mb-4 overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: phase !== 'initial' ? 1 : 0 }}
+            >
+              {kprcasLetters.map((letter, index) => (
+                <motion.span
+                  key={index}
+                  className="font-display text-5xl md:text-7xl lg:text-8xl text-foreground tracking-wider inline-block"
+                  initial={{ 
+                    opacity: 0, 
+                    y: 100, 
+                    rotateX: -90,
+                    filter: 'blur(10px)',
+                  }}
+                  animate={phase !== 'initial' ? { 
+                    opacity: 1, 
+                    y: 0, 
+                    rotateX: 0,
+                    filter: 'blur(0px)',
+                  } : {}}
+                  transition={{
+                    duration: 0.6,
+                    delay: index * 0.1,
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                  }}
+                  whileHover={{
+                    scale: 1.2,
+                    color: 'hsl(352, 100%, 46%)',
+                    transition: { duration: 0.2 }
+                  }}
+                >
+                  {letter}
+                </motion.span>
+              ))}
+            </motion.div>
+
+           
 
             {/* Decorative animated line */}
             <motion.div
