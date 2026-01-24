@@ -397,7 +397,7 @@ const HomePage = () => {
             <div className="block mb-4 leading-tight">
               <span className="text-tedx-red animate-pulse-glow">TED</span>
               <motion.span 
-                className="text-foreground inline-block text-4xl md:text-5xl lg:text-6xl align-text-top -ml-3 -mb-3 relative" 
+                className="text-foreground inline-block text-4xl md:text-5xl lg:text-6xl align-text-top relative" 
                 style={{top: '-8px'}}
                 whileHover={{ rotate: 180, scale: 1.2 }}
                 transition={{ type: "spring", stiffness: 200 }}
