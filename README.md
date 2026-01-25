@@ -60,6 +60,69 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Project Structure
+
+```
+kprcas-ted-x-splash/
+├── src/
+│   ├── components/
+│   │   ├── HomePage.tsx          # Main landing page with all sections
+│   │   ├── LoadingScreen.tsx      # Loading animation screen
+│   │   ├── NavLink.tsx            # Navigation link component
+│   │   └── ui/                    # shadcn/ui components
+│   │       ├── button.tsx
+│   │       ├── dialog.tsx
+│   │       ├── tooltip.tsx
+│   │       └── ... (other UI components)
+│   ├── hooks/
+│   │   ├── use-mobile.tsx         # Mobile detection hook
+│   │   └── use-toast.ts           # Toast notification hook
+│   ├── lib/
+│   │   └── utils.ts               # Utility functions
+│   ├── pages/
+│   │   ├── Index.tsx              # Index page
+│   │   └── NotFound.tsx            # 404 page
+│   ├── test/
+│   │   ├── example.test.ts
+│   │   └── setup.ts
+│   ├── App.tsx                    # Root app component
+│   ├── App.css                    # App styles
+│   ├── index.css                  # Global styles
+│   ├── main.tsx                   # Entry point
+│   └── vite-env.d.ts              # Vite type definitions
+├── public/
+│   └── robots.txt
+├── index.html                     # HTML template
+├── vite.config.ts                 # Vite configuration
+├── tailwind.config.ts             # Tailwind CSS configuration
+├── tsconfig.json                  # TypeScript configuration
+├── package.json                   # Project dependencies
+├── eslint.config.js               # ESLint configuration
+├── postcss.config.js              # PostCSS configuration
+├── components.json                # shadcn/ui configuration
+└── README.md                      # This file
+```
+
+## Key Features
+
+- **Responsive Design** - Fully responsive layout for mobile, tablet, and desktop
+- **Smooth Animations** - Framer Motion animations throughout the site
+- **Dark Theme** - Modern dark theme with TEDx red accent color
+- **Interactive Components** - Countdown timer, hover effects, scroll animations
+- **Loading Screen** - Animated loading sequence with particles and butterflies
+- **Navigation** - Fixed navbar with smooth scroll navigation
+- **Multiple Sections**:
+  - Hero Section with parallax background
+  - Event Showcase with countdown timer
+  - About TEDx section with statistics
+  - Speakers gallery
+  - CTA (Call-to-Action) section
+  - Team section
+  - Contact section with 3 ways to reach out
+  - Footer
+
+
+
 ## How can I deploy this project?
 
 Deploy using your preferred hosting platform (Vercel, Netlify, etc.).
