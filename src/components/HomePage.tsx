@@ -343,7 +343,7 @@ const HomePage = () => {
           
           {/* Animated geometric lines - Top left */}
           <motion.div
-            className="absolute top-0 left-0 w-96 h-40 border-l-4 border-t-4 border-tedx-red/20 rounded-full"
+            className="absolute top-0 left-0 w-96 h-40 bg-black border-l-4 border-t-4 border-tedx-red rounded-full"
             animate={{
               x: [0, 30, 0],
               y: [0, -20, 0],
@@ -354,7 +354,7 @@ const HomePage = () => {
           
           {/* Animated geometric lines - Top right */}
           <motion.div
-            className="absolute top-20 right-0 w-80 h-32 border-r-4 border-t-4 border-blue-500/15 rounded-full"
+            className="absolute top-20 right-0 w-80 h-32 bg-black border-r-4 border-t-4 border-tedx-red rounded-full"
             animate={{
               x: [0, -40, 0],
               y: [0, 15, 0],
@@ -365,7 +365,7 @@ const HomePage = () => {
           
           {/* Animated geometric lines - Bottom left */}
           <motion.div
-            className="absolute bottom-0 left-10 w-72 h-36 border-l-4 border-b-4 border-tedx-red/15 rounded-full"
+            className="absolute bottom-0 left-10 w-72 h-36 bg-black border-l-4 border-b-4 border-tedx-red rounded-full"
             animate={{
               x: [0, 25, 0],
               y: [0, 25, 0],
@@ -376,7 +376,7 @@ const HomePage = () => {
           
           {/* Animated geometric lines - Bottom right */}
           <motion.div
-            className="absolute bottom-20 right-20 w-96 h-40 border-r-4 border-b-4 border-yellow-600/10 rounded-full"
+            className="absolute bottom-20 right-20 w-96 h-40 bg-black border-r-4 border-b-4 border-tedx-red rounded-full"
             animate={{
               x: [0, -35, 0],
               y: [0, 20, 0],
@@ -387,21 +387,21 @@ const HomePage = () => {
           
           {/* Animated morphing shapes */}
           <motion.div
-            className="absolute top-1/4 -right-40 w-[500px] h-[500px] bg-tedx-red/10 blur-3xl animate-morph"
+            className="absolute top-1/4 -right-40 w-[500px] h-[500px] bg-black border-4 border-tedx-red blur-lg rounded-full animate-morph"
             animate={{
               scale: [1, 1.2, 1],
-              opacity: [0.2, 0.4, 0.2],
+              opacity: [0.3, 0.6, 0.3],
               x: [0, 50, 0],
               y: [0, 30, 0],
             }}
             transition={{ duration: 6, repeat: Infinity }}
           />
           <motion.div
-            className="absolute bottom-1/4 -left-40 w-[400px] h-[400px] bg-tedx-red/5 blur-3xl animate-morph"
+            className="absolute bottom-1/4 -left-40 w-[400px] h-[400px] bg-black border-4 border-tedx-red blur-lg rounded-full animate-morph"
             style={{ animationDelay: '2s' }}
             animate={{
               scale: [1.2, 1, 1.2],
-              opacity: [0.1, 0.3, 0.1],
+              opacity: [0.2, 0.4, 0.2],
               x: [0, -40, 0],
               y: [0, -25, 0],
             }}
@@ -410,7 +410,7 @@ const HomePage = () => {
           
           {/* Center floating element */}
           <motion.div
-            className="absolute top-1/3 left-1/3 w-48 h-48 border-4 border-blue-500/10 rounded-full"
+            className="absolute top-1/3 left-1/3 w-48 h-48 bg-black border-4 border-tedx-red rounded-full"
             animate={{
               scale: [1, 1.2, 1],
               x: [0, 40, 0],
@@ -751,7 +751,15 @@ const HomePage = () => {
         </div>
       </section>
       <section id="about" className="py-24 bg-background relative overflow-hidden">
-        <div className="container mx-auto px-6">
+        {/* Animated geometric background */}
+        <motion.div 
+          className="absolute inset-0"
+          style={{ pointerEvents: 'none' }}
+        >
+          <motion.div className="absolute top-20 right-0 w-80 h-32 bg-black border-r-4 border-t-4 border-tedx-red rounded-full" animate={{ x: [0, -40, 0], y: [0, 15, 0], rotate: [0, -8, 0] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }} />
+          <motion.div className="absolute bottom-40 left-10 w-72 h-36 bg-black border-l-4 border-b-4 border-tedx-red rounded-full" animate={{ x: [0, 25, 0], y: [0, 25, 0], rotate: [0, 6, 0] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 0.5 }} />
+        </motion.div>
+        <div className="container mx-auto px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left side - Content */}
             <motion.div
@@ -917,12 +925,14 @@ const HomePage = () => {
 
       {/* Speakers Section */}
       <section id="speakers" className="py-24 relative overflow-hidden">
-        {/* Background animation */}
-        <motion.div
-          className="absolute bottom-0 -left-40 w-96 h-96 bg-tedx-red/5 rounded-full blur-3xl"
-          animate={{ y: [50, -50, 50], x: [50, -50, 50] }}
-          transition={{ duration: 10, repeat: Infinity }}
-        />
+        {/* Animated geometric background */}
+        <motion.div 
+          className="absolute inset-0"
+          style={{ pointerEvents: 'none' }}
+        >
+          <motion.div className="absolute top-0 left-0 w-96 h-40 bg-black border-l-4 border-t-4 border-tedx-red rounded-full" animate={{ x: [0, 30, 0], y: [0, -20, 0], rotate: [0, 5, 0] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} />
+          <motion.div className="absolute bottom-0 right-20 w-96 h-40 bg-black border-r-4 border-b-4 border-tedx-red rounded-full" animate={{ x: [0, -35, 0], y: [0, 20, 0], rotate: [0, -7, 0] }} transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1.5 }} />
+        </motion.div>
 
         <div className="container mx-auto px-6 relative z-10">
           <motion.div
@@ -962,11 +972,14 @@ const HomePage = () => {
 
       {/* CTA Section with gradient animation */}
       <section className="py-24 relative overflow-hidden">
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-tedx-red/20 via-background to-tedx-red/20 animate-gradient"
-          style={{ backgroundSize: '200% 200%' }}
-        />
-        
+        {/* Animated geometric background */}
+        <motion.div 
+          className="absolute inset-0"
+          style={{ pointerEvents: 'none' }}
+        >
+          <motion.div className="absolute top-20 left-0 w-80 h-32 bg-black border-l-4 border-t-4 border-tedx-red rounded-full" animate={{ x: [0, 30, 0], y: [0, -20, 0], rotate: [0, 5, 0] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} />
+          <motion.div className="absolute bottom-10 right-0 w-96 h-40 bg-black border-r-4 border-b-4 border-tedx-red rounded-full" animate={{ x: [0, -35, 0], y: [0, 20, 0], rotate: [0, -7, 0] }} transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1.5 }} />
+        </motion.div>
         <div className="container mx-auto px-6 relative z-10">
           <motion.div
             className="max-w-3xl mx-auto text-center glass rounded-2xl p-12"
@@ -1011,12 +1024,14 @@ const HomePage = () => {
 
       {/* Team Section */}
       <section id="team" className="py-24 relative overflow-hidden">
-        {/* Background animation */}
-        <motion.div
-          className="absolute top-1/2 -right-40 w-96 h-96 bg-tedx-red/5 rounded-full blur-3xl"
-          animate={{ y: [-50, 50, -50], x: [-50, 30, -50] }}
-          transition={{ duration: 8, repeat: Infinity }}
-        />
+        {/* Animated geometric background */}
+        <motion.div 
+          className="absolute inset-0"
+          style={{ pointerEvents: 'none' }}
+        >
+          <motion.div className="absolute top-0 right-0 w-80 h-32 bg-black border-r-4 border-t-4 border-tedx-red rounded-full" animate={{ x: [0, -40, 0], y: [0, 15, 0], rotate: [0, -8, 0] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }} />
+          <motion.div className="absolute bottom-40 left-10 w-72 h-36 bg-black border-l-4 border-b-4 border-tedx-red rounded-full" animate={{ x: [0, 25, 0], y: [0, 25, 0], rotate: [0, 6, 0] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 0.5 }} />
+        </motion.div>
 
         <div className="container mx-auto px-6 relative z-10">
           <motion.div
@@ -1080,12 +1095,14 @@ const HomePage = () => {
 
       {/* Contacts Section */}
       <section id="contacts" className="py-24 bg-secondary/30 relative overflow-hidden">
-        {/* Background animation */}
-        <motion.div
-          className="absolute top-0 left-0 w-96 h-96 bg-tedx-red/5 rounded-full blur-3xl"
-          animate={{ y: [0, -50, 0], x: [0, 50, 0] }}
-          transition={{ duration: 10, repeat: Infinity }}
-        />
+        {/* Animated geometric background */}
+        <motion.div 
+          className="absolute inset-0"
+          style={{ pointerEvents: 'none' }}
+        >
+          <motion.div className="absolute top-0 left-0 w-96 h-40 bg-black border-l-4 border-t-4 border-tedx-red rounded-full" animate={{ x: [0, 30, 0], y: [0, -20, 0], rotate: [0, 5, 0] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} />
+          <motion.div className="absolute bottom-0 right-20 w-96 h-40 bg-black border-r-4 border-b-4 border-tedx-red rounded-full" animate={{ x: [0, -35, 0], y: [0, 20, 0], rotate: [0, -7, 0] }} transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1.5 }} />
+        </motion.div>
 
         <div className="container mx-auto px-6 relative z-10">
           <motion.div
