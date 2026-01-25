@@ -334,12 +334,56 @@ const HomePage = () => {
 
       {/* Hero Section with Parallax */}
       <section id="home" ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-        {/* Parallax background elements */}
+        {/* Animated geometric background */}
         <motion.div 
           className="absolute inset-0"
           style={{ y: backgroundY }}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-secondary/20" />
+          
+          {/* Animated geometric lines - Top left */}
+          <motion.div
+            className="absolute top-0 left-0 w-96 h-40 border-l-4 border-t-4 border-tedx-red/20 rounded-full"
+            animate={{
+              x: [0, 30, 0],
+              y: [0, -20, 0],
+              rotate: [0, 5, 0],
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          />
+          
+          {/* Animated geometric lines - Top right */}
+          <motion.div
+            className="absolute top-20 right-0 w-80 h-32 border-r-4 border-t-4 border-blue-500/15 rounded-full"
+            animate={{
+              x: [0, -40, 0],
+              y: [0, 15, 0],
+              rotate: [0, -8, 0],
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          />
+          
+          {/* Animated geometric lines - Bottom left */}
+          <motion.div
+            className="absolute bottom-0 left-10 w-72 h-36 border-l-4 border-b-4 border-tedx-red/15 rounded-full"
+            animate={{
+              x: [0, 25, 0],
+              y: [0, 25, 0],
+              rotate: [0, 6, 0],
+            }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+          />
+          
+          {/* Animated geometric lines - Bottom right */}
+          <motion.div
+            className="absolute bottom-20 right-20 w-96 h-40 border-r-4 border-b-4 border-yellow-600/10 rounded-full"
+            animate={{
+              x: [0, -35, 0],
+              y: [0, 20, 0],
+              rotate: [0, -7, 0],
+            }}
+            transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+          />
           
           {/* Animated morphing shapes */}
           <motion.div
@@ -347,6 +391,8 @@ const HomePage = () => {
             animate={{
               scale: [1, 1.2, 1],
               opacity: [0.2, 0.4, 0.2],
+              x: [0, 50, 0],
+              y: [0, 30, 0],
             }}
             transition={{ duration: 6, repeat: Infinity }}
           />
@@ -356,8 +402,22 @@ const HomePage = () => {
             animate={{
               scale: [1.2, 1, 1.2],
               opacity: [0.1, 0.3, 0.1],
+              x: [0, -40, 0],
+              y: [0, -25, 0],
             }}
             transition={{ duration: 8, repeat: Infinity }}
+          />
+          
+          {/* Center floating element */}
+          <motion.div
+            className="absolute top-1/3 left-1/3 w-48 h-48 border-4 border-blue-500/10 rounded-full"
+            animate={{
+              scale: [1, 1.2, 1],
+              x: [0, 40, 0],
+              y: [0, -30, 0],
+              rotate: [0, 180, 360],
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           />
         </motion.div>
 
