@@ -6,10 +6,10 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const socialLinks = [
-    { icon: MessageCircle, href: "https://wa.me/918122696986", label: "WhatsApp" },
+    { icon: MessageCircle, href: "https://whatsapp.com/channel/0029VbBZudk3GJOx8vumlr0H", label: "WhatsApp" },
     { icon: Linkedin, href: "#", label: "LinkedIn" },
     { icon: Github, href: "#", label: "GitHub" },
-    { icon: Instagram, href: "#", label: "Instagram" },
+    { icon: Instagram, href: "https://www.instagram.com/netcraft_studio?igsh=cGUyOXVzZnY3ZTVj", label: "Instagram" },
   ];
 
   const footerLinks = [
@@ -22,10 +22,10 @@ const Footer = () => {
 
   return (
     <footer className="relative border-t border-border bg-background/50 backdrop-blur-lg">
-      <div className="container mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
           {/* Brand */}
-          <div className="space-y-4">
+          <div className="space-y-4 text-center md:text-left">
             <h2 className="text-2xl font-display font-bold gta-title">
               NetCraft<span className="text-secondary"> Studio</span>
             </h2>

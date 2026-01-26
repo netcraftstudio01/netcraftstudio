@@ -40,7 +40,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="text-secondary font-display text-sm md:text-lg lg:text-xl tracking-[0.3em] uppercase"
+            className="text-secondary font-display text-xs sm:text-sm md:text-lg lg:text-xl tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.3em] uppercase"
           >
             Welcome to the Digital Age
           </motion.p>

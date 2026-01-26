@@ -81,7 +81,7 @@ const Contact = () => {
     {
       icon: Phone,
       label: "Phone",
-      value: "+91 8122696986",
+      value: ["+91 8122696986", "+91 9360244928"],
       color: "secondary",
     },
     {
@@ -93,12 +93,12 @@ const Contact = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <div className="noise-overlay" />
       <Navigation />
 
       {/* Hero Section */}
-      <section className="hero-section min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] py-12 sm:py-16 md:py-20 pt-32 sm:pt-40 md:pt-48 flex items-center">
+      <section className="hero-section min-h-[50vh] sm:min-h-[60vh] md:min-h-[70vh] py-10 sm:py-12 md:py-16 pt-28 sm:pt-32 md:pt-40 flex items-center">
         <div className="absolute inset-0 z-0">
           <img
             src={contactBg}
@@ -132,7 +132,7 @@ const Contact = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 md:py-24 relative">
+      <section className="py-12 sm:py-16 md:py-24 relative">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16">
             {/* Contact Info */}
@@ -143,11 +143,11 @@ const Contact = () => {
               className="space-y-8 md:space-y-12"
             >
               <div>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-4">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-3 sm:mb-4">
                   <span className="gta-title">Get In</span>{" "}
                   <span className="text-secondary">Touch</span>
                 </h2>
-                <p className="text-muted-foreground font-body text-base sm:text-lg">
+                <p className="text-muted-foreground font-body text-sm sm:text-base md:text-lg">
                   Whether you have a project in mind, a question, or just want
                   to say hello – we'd love to hear from you.
                 </p>
@@ -170,9 +170,19 @@ const Contact = () => {
                       <p className="text-muted-foreground font-body text-xs sm:text-sm">
                         {info.label}
                       </p>
-                      <p className="text-foreground font-display text-base sm:text-lg">
-                        {info.value}
-                      </p>
+                      {Array.isArray(info.value) ? (
+                        <div className="space-y-1">
+                          {info.value.map((val, i) => (
+                            <p key={i} className="text-foreground font-display text-base sm:text-lg">
+                              {val}
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-foreground font-display text-base sm:text-lg">
+                          {info.value}
+                        </p>
+                      )}
                     </div>
                   </motion.div>
                 ))}

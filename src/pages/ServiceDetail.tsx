@@ -405,12 +405,12 @@ const ServiceDetail = () => {
   const Icon = service.icon;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <div className="noise-overlay" />
       <Navigation />
 
       {/* Hero Section */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 relative overflow-hidden">
+      <section className="py-10 sm:py-12 md:py-16 lg:py-20 pt-20 sm:pt-24 md:pt-28 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-background to-background" />
         <div className="container mx-auto px-3 sm:px-4 md:px-6 relative z-10">
           <Button

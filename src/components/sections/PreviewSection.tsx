@@ -46,7 +46,7 @@ const PreviewSection = () => {
   return (
     <>
       {sections.map((section, index) => (
-        <section key={section.title} className="w-full py-12 md:py-20 lg:py-32 relative overflow-hidden">
+        <section key={section.title} className="w-full py-10 sm:py-12 md:py-20 lg:py-32 relative overflow-hidden">
           {/* Background Effects */}
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -66,10 +66,10 @@ const PreviewSection = () => {
                   <div className="w-16 sm:w-20 h-16 sm:h-20 rounded-lg bg-card flex items-center justify-center mx-auto text-primary">
                     {section.icon}
                   </div>
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold">
                     <span className="gta-title">{section.title}</span>
                   </h2>
-                  <p className="text-muted-foreground font-body text-base sm:text-lg leading-relaxed">
+                  <p className="text-muted-foreground font-body text-sm sm:text-base md:text-lg leading-relaxed px-2">
                     {section.description}
                   </p>
                   <Link to={section.link}>

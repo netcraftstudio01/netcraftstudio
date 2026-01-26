@@ -5,7 +5,7 @@ import Footer from "@/components/layout/Footer";
 import { clientsLogoCarousel } from "@/assets/clients";
 import { InfiniteSlider } from "@/components/ui/infinite-slider";
 import aboutBg from "@/assets/about-bg.jpg";
-import themImage from "@/assets/team/me.jpg";
+import themImage from "@/assets/team/thenmugilan.jpg";
 import team1 from "@/assets/team/prasanth.jpeg";
 import team2 from "@/assets/team/gokul.jpeg";
 import team3 from "@/assets/team/dharneesh.jpg";
@@ -68,12 +68,12 @@ const About = () => {
   const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background overflow-x-hidden">
       <div className="noise-overlay" />
       <Navigation />
 
       {/* Hero Section */}
-      <section className="hero-section min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] py-12 sm:py-16 md:py-20 pt-32 sm:pt-40 md:pt-48 flex items-center">
+      <section className="hero-section min-h-[50vh] sm:min-h-[60vh] md:min-h-[70vh] py-10 sm:py-12 md:py-16 pt-24 sm:pt-32 md:pt-40 flex items-center">
         <motion.div className="absolute inset-0 z-0" style={{ y }}>
           <img
             src={aboutBg}
@@ -83,7 +83,7 @@ const About = () => {
         </motion.div>
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-background/80 via-background/60 to-background" />
 
-        <div className="hero-content container mx-auto px-6 text-center">
+        <div className="hero-content container mx-auto px-4 sm:px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -112,7 +112,7 @@ const About = () => {
       </section>
 
       {/* Story Section */}
-      <section className="py-16 md:py-24 relative">
+      <section className="py-12 sm:py-16 md:py-24 relative">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16 items-center">
             <motion.div
@@ -122,11 +122,11 @@ const About = () => {
               transition={{ duration: 0.8 }}
               className="space-y-8"
             >
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold">
                 <span className="gta-title">Our</span>{" "}
                 <span className="text-secondary">Story</span>
               </h2>
-              <div className="space-y-4 text-muted-foreground font-body text-base sm:text-lg leading-relaxed">
+              <div className="space-y-3 sm:space-y-4 text-muted-foreground font-body text-sm sm:text-base md:text-lg leading-relaxed">
                 <p>
                   NetCraft Studio was born from a simple idea — to build digital experiences that don't just work, but leave an impact.
                 </p>
@@ -147,7 +147,7 @@ const About = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="grid grid-cols-2 gap-4 sm:gap-6"
+              className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6"
             >
               {[
                 { icon: Users, label: "8+", text: "Team Members", color: "primary" },
@@ -163,8 +163,8 @@ const About = () => {
                   transition={{ delay: index * 0.1 }}
                   className="gta-card p-4 sm:p-6 text-center"
                 >
-                  <stat.icon className={`w-8 sm:w-10 h-8 sm:h-10 mx-auto mb-3 sm:mb-4 text-${stat.color}`} />
-                  <h3 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+                  <stat.icon className={`w-6 sm:w-8 md:w-10 h-6 sm:h-8 md:h-10 mx-auto mb-2 sm:mb-3 md:mb-4 text-${stat.color}`} />
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-foreground">
                     {stat.label}
                   </h3>
                   <p className="text-xs sm:text-sm md:text-base text-muted-foreground font-body">{stat.text}</p>
@@ -176,7 +176,7 @@ const About = () => {
       </section>
 
       {/* Team Section */}
-      <section className="py-16 md:py-24 relative overflow-hidden">
+      <section className="py-12 sm:py-16 md:py-24 relative overflow-hidden team-protected">
         <div className="absolute inset-0 bg-gradient-to-b from-background via-card/50 to-background" />
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
@@ -184,13 +184,13 @@ const About = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12 md:mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-3 sm:mb-4">
               <span className="gta-title">Meet The</span>{" "}
               <span className="text-secondary">Team</span>
             </h2>
-            <p className="text-muted-foreground text-base sm:text-lg font-body">
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg font-body px-4">
               The masterminds behind the digital magic
             </p>
           </motion.div>
@@ -204,21 +204,27 @@ const About = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className="gta-card group overflow-hidden"
+                className="gta-card group overflow-hidden select-none"
+                onContextMenu={(e) => e.preventDefault()}
               >
                 <div className="relative aspect-square overflow-hidden">
                   <img
                     src={member.image}
                     alt={member.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 pointer-events-none"
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
+                    onDragStart={(e) => e.preventDefault()}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {/* Invisible overlay to prevent direct image interaction */}
+                  <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
                 </div>
-                <div className="p-6 text-center">
-                  <h3 className="font-display text-xl text-foreground group-hover:text-primary transition-colors">
+                <div className="p-3 sm:p-4 md:p-6 text-center">
+                  <h3 className="font-display text-sm sm:text-base md:text-xl text-foreground group-hover:text-primary transition-colors truncate">
                     {member.name}
                   </h3>
-                  <p className="text-secondary font-body">{member.role}</p>
+                  <p className="text-secondary font-body text-xs sm:text-sm md:text-base truncate">{member.role}</p>
                 </div>
               </motion.div>
             ))}
@@ -227,19 +233,19 @@ const About = () => {
       </section>
 
       {/* Clients Section */}
-      <section className="py-16 md:py-24 relative">
+      <section className="py-12 sm:py-16 md:py-24 relative">
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12 md:mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-3 sm:mb-4">
               <span className="gta-title">Trusted</span>{" "}
               <span className="text-secondary">Clients</span>
             </h2>
-            <p className="text-muted-foreground text-base sm:text-lg font-body">
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg font-body px-4">
               Partnering with industry leaders worldwide
             </p>
           </motion.div>
@@ -250,15 +256,18 @@ const About = () => {
             viewport={{ once: true }}
             className="py-8 md:py-12"
           >
-            <InfiniteSlider gap={32} duration={20} className="w-full">
-              {clientsLogoCarousel.map((client) => {
-                const ClientLogo = client.img;
-                return (
-                  <div key={client.id} className="flex-shrink-0">
-                    <ClientLogo className="h-16 sm:h-20 w-24 sm:w-32 object-contain" />
-                  </div>
-                );
-              })}
+            {/* duration: lower = faster, higher = slower (in seconds) */}
+            <InfiniteSlider gap={32} duration={280} durationOnHover={100} className="w-full">
+              {Array.from({ length: 50 }).flatMap((_, loopIndex) =>
+                clientsLogoCarousel.map((client) => {
+                  const ClientLogo = client.img;
+                  return (
+                    <div key={`${loopIndex}-${client.id}`} className="flex-shrink-0">
+                      <ClientLogo className="h-16 sm:h-20 w-24 sm:w-32 object-contain" />
+                    </div>
+                  );
+                })
+              )}
             </InfiniteSlider>
           </motion.div>
         </div>

@@ -187,7 +187,7 @@ const Services = () => {
   const containerRef = useRef(null);
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background overflow-x-hidden">
       <div className="noise-overlay" />
       <Navigation />
 
@@ -226,7 +226,7 @@ const Services = () => {
       </section>
 
       {/* Timeline Section */}
-      <section className="py-16 md:py-24 relative">
+      <section className="py-12 sm:py-16 md:py-24 relative">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="relative">
             {/* Timeline Line */}

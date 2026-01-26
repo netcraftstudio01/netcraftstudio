@@ -84,12 +84,15 @@
 
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Rajdhani', sans-serif;
     overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 
   /* GTA-Style Headings */
@@ -311,6 +314,37 @@
     animation: neon-flicker 2s ease-in-out infinite;
   }
 
+  /* Screenshot & Copy Protection for Team Section */
+  .team-protected {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .team-protected img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    pointer-events: none;
+  }
+
+  /* Hide team images when printing */
+  @media print {
+    .team-protected img {
+      visibility: hidden !important;
+    }
+    .team-protected::after {
+      content: "Protected Content";
+      display: block;
+      text-align: center;
+      padding: 20px;
+    }
+  }
+
   /* Form inputs styling */
   input[type="text"],
   input[type="email"],
@@ -330,4 +364,33 @@
     pointer-events: auto !important;
     z-index: 10;
   }
+
+  @media (max-width: 1024px), (min-width: 0px) {
+    .team-protected img {
+      /* Attempt to blur images for screenshots and screen recording on all devices */
+      /* This will be visible to the user, but is the only CSS-based deterrent */
+      /* Remove filter if you want to show images normally */
+      filter: blur(0px);
+      transition: filter 0.2s;
+    }
+    body.screenshot-blur .team-protected img {
+      filter: blur(18px) grayscale(1) brightness(1.5) !important;
+      transition: filter 0.2s;
+    }
+    body.screenshot-blur .team-protected::after {
+      content: "Protected: Screenshot detected";
+      display: block;
+      text-align: center;
+      font-size: 1.2em;
+      color: #fff;
+      background: rgba(0,0,0,0.7);
+      padding: 16px;
+      border-radius: 8px;
+      position: absolute;
+      left: 0; right: 0; top: 40%;
+      z-index: 100;
+    }
+  }
+
+  /* Attempt to detect screenshot/recording via JS and add .screenshot-blur to body */
 }

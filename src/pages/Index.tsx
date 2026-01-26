@@ -5,7 +5,7 @@ import PreviewSection from "@/components/sections/PreviewSection";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden w-full">
       {/* Noise Overlay */}
       <div className="noise-overlay" />
       

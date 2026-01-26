@@ -165,14 +165,14 @@ const projects = [
     category: "Management",
     description: "Complete accounting and financial management software solution",
     fullDescription: "A comprehensive accounting software for managing ledgers, financial statements, expense tracking, budget management, and compliance reporting with multi-company support.",
-    image: "/portfolio/accounting-system.jpg",
+    image: "/portfolio/accounting-system.png",
     tags: ["React", "Chart.js", "Financial APIs"],
     features: ["Ledger management", "Financial statements", "Expense tracking", "Budget planning", "Compliance reports", "Data analytics"],
     technologies: ["React.js", "Node.js", "Chart.js", "PostgreSQL", "Financial APIs"],
     year: "2024",
     client: "Accounting Firm",
     liveUrl: undefined,
-    sourceCodeUrl: undefined,
+    sourceCodeUrl: "https://github.com/netcraftstudio01/Accounting-System-Template.git",
   },
 ];
 
@@ -217,16 +217,16 @@ const ProjectCard = forwardRef<HTMLDivElement, { project: (typeof projects)[0]; 
         </div>
       </div>
 
-      <div className="p-6 space-y-3">
+      <div className="p-4 sm:p-5 md:p-6 space-y-2 sm:space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-display uppercase tracking-wider text-secondary">
             {project.category}
           </span>
         </div>
-        <h3 className="font-display text-xl text-foreground group-hover:text-primary transition-colors">
+        <h3 className="font-display text-base sm:text-lg md:text-xl text-foreground group-hover:text-primary transition-colors">
           {project.title}
         </h3>
-        <p className="text-muted-foreground font-body text-sm line-clamp-2">
+        <p className="text-muted-foreground font-body text-xs sm:text-sm line-clamp-2">
           {project.description}
         </p>
         <div className="flex flex-wrap gap-2 pt-2">
@@ -411,12 +411,12 @@ const Portfolio = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <div className="noise-overlay" />
       <Navigation />
 
       {/* Hero Section */}
-      <section className="hero-section min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] py-12 sm:py-16 md:py-20 pt-32 sm:pt-40 md:pt-48 flex items-center">
+      <section className="hero-section min-h-[50vh] sm:min-h-[60vh] md:min-h-[70vh] py-10 sm:py-12 md:py-16 pt-24 sm:pt-32 md:pt-40 flex items-center">
         <div className="absolute inset-0 z-0">
           <img
             src={portfolioBg}
@@ -455,7 +455,7 @@ const Portfolio = () => {
       </section>
 
       {/* Portfolio Section */}
-      <section className="py-16 md:py-24 relative">
+      <section className="py-12 sm:py-16 md:py-24 relative">
         <div className="container mx-auto px-4 sm:px-6">
           {/* Filter Buttons */}
           <motion.div

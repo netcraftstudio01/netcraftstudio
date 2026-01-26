@@ -40,12 +40,13 @@ const Navigation = () => {
             : "bg-transparent"
         }`}
       >
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link to="/" className="group">
+            <Link to="/" className="group absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 flex items-center gap-2">
+              <img src="/img/logo.png" alt="NetCraft Studio Logo" className="w-8 h-8 sm:w-10 sm:h-10" />
               <motion.h1
-                className="text-2xl md:text-3xl font-display font-bold gta-title"
+                className="text-xl sm:text-2xl md:text-3xl font-display font-bold gta-title"
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 400 }}
               >
@@ -53,6 +54,9 @@ const Navigation = () => {
                 <span className="text-secondary"> Studio</span>
               </motion.h1>
             </Link>
+
+            {/* Spacer for mobile to balance the menu button */}
+            <div className="w-10 lg:hidden" />
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">
