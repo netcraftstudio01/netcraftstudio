@@ -1,7 +1,14 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Create transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   // Enable CORS
@@ -25,15 +32,15 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   // Check environment variables
-  if (!process.env.RESEND_API_KEY) {
-    console.error('❌ RESEND_API_KEY not configured');
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    console.error('❌ EMAIL_USER or EMAIL_PASSWORD not configured');
     return res.status(500).json({ error: 'Email service not configured' });
   }
 
   try {
     // Send email to admin
-    await resend.emails.send({
-      from: 'noreply@netcraftstudio.com',
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
       to: 'netcraftstudio01@gmail.com',
       subject: `New Contact Form Submission: ${subject}`,
       html: `
@@ -48,14 +55,14 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     });
 
     // Send email to user
-    await resend.emails.send({
-      from: 'noreply@netcraftstudio.com',
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
       to: email,
       subject: 'We received your message - NetCraft Studio',
       html: `
         <h2>Thank you for contacting us!</h2>
         <p>Hi ${name},</p>
-        <p>We have received your message and will get back to you as soon as possible.</p>
+        <p>We have received your message and will get back to you within 24 hours.</p>
         <p><strong>Your message:</strong></p>
         <p>${message}</p>
         <hr>
