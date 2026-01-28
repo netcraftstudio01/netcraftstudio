@@ -96,6 +96,25 @@ app.get('/api/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+// Serve static files from the dist directory (for production build)
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const distPath = path.join(__dirname, 'dist');
+app.use(express.static(distPath));
+
+// Catch-all: serve index.html for all non-API routes (SPA support)
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`Email server running on port ${PORT}`);
   console.log(`Make sure .env file is configured with EMAIL_USER and EMAIL_PASSWORD`);

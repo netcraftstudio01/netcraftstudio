@@ -90,20 +90,22 @@ const HeroSection = () => {
               </Button>
             </Link>
           </motion.div>
+
+          {/* Scroll Indicator: moved below tagline */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, y: [0, 10, 0] }}
+            transition={{
+              opacity: { delay: 1.5 },
+              y: { repeat: Infinity, duration: 2 },
+            }}
+            className="flex justify-center pt-6"
+          >
+            <ChevronDown className="w-6 sm:w-8 h-6 sm:h-8 text-primary animate-pulse" />
+          </motion.div>
         </motion.div>
 
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, y: [0, 10, 0] }}
-          transition={{
-            opacity: { delay: 1.5 },
-            y: { repeat: Infinity, duration: 2 },
-          }}
-          className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <ChevronDown className="w-6 sm:w-8 h-6 sm:h-8 text-primary animate-pulse" />
-        </motion.div>
+        {/* ...existing code... */}
       </div>
     </section>
   );

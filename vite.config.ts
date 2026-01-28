@@ -3,13 +3,17 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Email transporter setup
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER || 'netcraftstudio01@gmail.com',
-    pass: process.env.EMAIL_PASSWORD || 'nqee ofbh dsjh mwsk',
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
   },
 });
 
@@ -46,7 +50,7 @@ const emailPlugin = {
 
             // Email to admin
             const adminMailOptions = {
-              from: process.env.EMAIL_USER || 'netcraftstudio01@gmail.com',
+              from: process.env.EMAIL_USER,
               to: 'netcraftstudio01@gmail.com',
               subject: `New Contact Form Submission: ${subject}`,
               html: `
@@ -62,13 +66,13 @@ const emailPlugin = {
 
             // Email to user
             const userMailOptions = {
-              from: process.env.EMAIL_USER || 'netcraftstudio01@gmail.com',
+              from: process.env.EMAIL_USER,
               to: email,
               subject: 'We received your message - NetCraft Studio',
               html: `
                 <h2>Thank you for contacting us!</h2>
                 <p>Hi ${name},</p>
-                <p>We have received your message and will get back to you as soon as possible.</p>
+                <p>We have received your message and will get back to you within 24 hours.</p>
                 <p><strong>Your message:</strong></p>
                 <p>${message}</p>
                 <hr>
