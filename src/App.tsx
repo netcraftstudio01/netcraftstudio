@@ -10,8 +10,8 @@ import Services from "./pages/Services";
 import ServiceDetail from "./pages/ServiceDetail";
 import Portfolio from "./pages/Portfolio";
 import Contact from "./pages/Contact";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
-import ForceHomeOnRefresh from "./force-home-on-refresh";
 
 const queryClient = new QueryClient();
 
@@ -21,7 +21,6 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <ForceHomeOnRefresh />
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
@@ -29,6 +28,7 @@ const App = () => (
           <Route path="/services" element={<Services />} />
           <Route path="/service/:serviceId" element={<ServiceDetail />} />
           <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/contact" element={<Contact />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

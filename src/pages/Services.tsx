@@ -36,7 +36,7 @@ const services: Service[] = [
     slug: "web-development",
     click: "Click for more details",
   },
-  {
+  /* {
     icon: Smartphone,
     title: "App Development",
     description:
@@ -44,7 +44,7 @@ const services: Service[] = [
     features: ["React Native", "iOS/Android", "Cross-Platform", "App Store Ready"],
     slug: "app-development",
     click: "Click for more details",
-  },
+  },*/
   {
     icon: Palette,
     title: "UI/UX Design",

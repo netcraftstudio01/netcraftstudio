@@ -7,7 +7,11 @@ const ForceHomeOnRefresh = () => {
 
   useEffect(() => {
     // Only redirect if this is a page load (not navigation)
-    if (performance.navigation.type === 1 && location.pathname !== "/") {
+    if (
+      performance.navigation.type === 1 &&
+      location.pathname !== "/" &&
+      !location.pathname.startsWith("/admin")
+    ) {
       navigate("/", { replace: true });
     }
   }, []);

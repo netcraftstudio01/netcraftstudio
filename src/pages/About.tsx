@@ -1,71 +1,43 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
-import { clientsLogoCarousel } from "@/assets/clients";
 import { InfiniteSlider } from "@/components/ui/infinite-slider";
 import aboutBg from "@/assets/about-bg.jpg";
-import themImage from "@/assets/team/thenmugilan.jpg";
-import team1 from "@/assets/team/prasanth.jpeg";
-import team2 from "@/assets/team/gokul.jpeg";
-import team3 from "@/assets/team/dharneesh.jpg";
-import team4 from "@/assets/team/barath.jpg"
-import team5 from "@/assets/team/kavya.jpg"
-import team6 from "@/assets/team/keerthana.jpg"
-import team7 from "@/assets/team/sanjai.jpg"
 import { Users, Target, Rocket, Award } from "lucide-react";
-
-const teamMembers = [
-  {
-    name: "Prasanth",
-    role: "CEO & Founder",
-    image: team1,
-  },
-  {
-    name: "Thenmugilan",
-    role: "Lead Developer",
-    image: themImage,
-  },
-  {
-    name: "Barath Nivash",
-    role: "Backend Developer",
-    image: team4,
-  },
-  {
-    name: "Gokul",
-    role: "Backend Developer",
-    image: team2,
-  },
-  {
-    name: "Sanjai Giri",
-    role: "Full Stack Developer",
-    image: team7,
-  },
-  {
-    name: "Dharneesh",
-    role: "Java Developer",
-    image: team3,
-  },
-  {
-    name: "Kaviya Shree",
-    role: "Debug Engineer",
-    image: team5,
-  },
-  {
-    name: "Keerthana",
-    role: "UI/UX Designer",
-    image: team6,
-  },
-];
+import { getClients, getTeamMembers, type Client, type TeamMember } from "@/data/siteData";
 
 const About = () => {
   const containerRef = useRef(null);
+  const [clients, setClients] = useState<Client[]>(() => getClients());
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() =>
+    getTeamMembers()
+  );
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
 
   const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
+
+  useEffect(() => {
+    const updateClients = () => setClients(getClients());
+    const updateTeam = () => setTeamMembers(getTeamMembers());
+
+    updateClients();
+    updateTeam();
+    window.addEventListener("ncs-data-updated", updateClients);
+    window.addEventListener("ncs-data-updated", updateTeam);
+    window.addEventListener("storage", updateClients);
+    window.addEventListener("storage", updateTeam);
+
+    return () => {
+      window.removeEventListener("ncs-data-updated", updateClients);
+      window.removeEventListener("ncs-data-updated", updateTeam);
+      window.removeEventListener("storage", updateClients);
+      window.removeEventListener("storage", updateTeam);
+    };
+  }, []);
 
   return (
     <div ref={containerRef} className="min-h-screen bg-background overflow-x-hidden">
@@ -198,7 +170,7 @@ const About = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {teamMembers.map((member, index) => (
               <motion.div
-                key={member.name}
+                key={member.id}
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -259,14 +231,16 @@ const About = () => {
             {/* duration: lower = faster, higher = slower (in seconds) */}
             <InfiniteSlider gap={32} duration={280} durationOnHover={100} className="w-full">
               {Array.from({ length: 50 }).flatMap((_, loopIndex) =>
-                clientsLogoCarousel.map((client) => {
-                  const ClientLogo = client.img;
-                  return (
-                    <div key={`${loopIndex}-${client.id}`} className="flex-shrink-0">
-                      <ClientLogo className="h-16 sm:h-20 w-24 sm:w-32 object-contain" />
-                    </div>
-                  );
-                })
+                clients.map((client) => (
+                  <div key={`${loopIndex}-${client.id}`} className="flex-shrink-0">
+                    <img
+                      src={client.image}
+                      alt={client.alt || client.name}
+                      className="h-16 sm:h-20 w-24 sm:w-32 object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+                ))
               )}
             </InfiniteSlider>
           </motion.div>

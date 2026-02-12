@@ -66,11 +66,12 @@ const HeroSection = () => {
             transition={{ delay: 1 }}
             className="text-base sm:text-lg md:text-xl lg:text-2xl text-foreground/80 font-body max-w-2xl mx-auto px-4"
           >
-            Service & Product Based IT Solutions.
-            <br />
+            
             <span className="text-primary">Where Creativity,</span>{" "}
             <span className="text-secondary">Meets Technology.</span>
           </motion.p>
+          <br />
+          Service & Product Based IT Solutions.
 
           {/* CTA Buttons */}
           <motion.div
