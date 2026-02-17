@@ -57,6 +57,23 @@ const toList = (value: string) =>
 const getNextId = (items: Array<{ id: number }>) =>
   Math.max(0, ...items.map((item) => item.id)) + 1;
 
+// Transform API data from snake_case to camelCase
+const transformProjectFromAPI = (project: Record<string, unknown>): PortfolioProject => ({
+  id: project.id as number,
+  title: project.title as string,
+  category: project.category as string,
+  description: project.description as string,
+  fullDescription: (project.full_description || project.fullDescription || "") as string,
+  image: project.image as string,
+  tags: Array.isArray(project.tags) ? project.tags : JSON.parse((project.tags as string) || '[]'),
+  features: Array.isArray(project.features) ? project.features : JSON.parse((project.features as string) || '[]'),
+  technologies: Array.isArray(project.technologies) ? project.technologies : JSON.parse((project.technologies as string) || '[]'),
+  year: project.year as string,
+  client: project.client as string,
+  liveUrl: (project.live_url || project.liveUrl || "") as string,
+  sourceCodeUrl: (project.source_code_url || project.sourceCodeUrl || "") as string,
+});
+
 const Admin = () => {
   const { uploadImage: uploadToCloudinary, uploading: isUploading, uploadError } = useCloudinaryUpload();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -89,8 +106,10 @@ const Admin = () => {
 
         if (projectsRes.ok) {
           const projectsData = await projectsRes.json();
-          setProjects(projectsData);
-          setPortfolioProjects(projectsData, false);
+          // Transform API data from snake_case to camelCase
+          const transformedProjects = projectsData.map(transformProjectFromAPI);
+          setProjects(transformedProjects);
+          setPortfolioProjects(transformedProjects, false);
         } else {
           // Fallback to localStorage if API fails
           setProjects(getPortfolioProjects());
@@ -107,7 +126,7 @@ const Admin = () => {
         if (teamRes.ok) {
           const teamData = await teamRes.json();
           setTeamMembersList(teamData);
-          setTeamMembers(teamData, false);
+          setTeamMembers(teamData);
         } else {
           setTeamMembersList(getTeamMembers());
         }
@@ -221,19 +240,20 @@ const Admin = () => {
 
   const handleProjectEdit = (project: PortfolioProject) => {
     setEditingProjectId(project.id);
+    // Ensure all fields are properly populated, including API fields
     setProjectForm({
-      title: project.title,
-      category: project.category,
-      description: project.description,
-      fullDescription: project.fullDescription,
-      image: project.image,
-      tags: project.tags.join(", "),
-      features: project.features.join(", "),
-      technologies: project.technologies.join(", "),
-      year: project.year,
-      client: project.client,
-      liveUrl: project.liveUrl ?? "",
-      sourceCodeUrl: project.sourceCodeUrl ?? "",
+      title: project.title || "",
+      category: project.category || "",
+      description: project.description || "",
+      fullDescription: project.fullDescription || "",
+      image: project.image || "",
+      tags: Array.isArray(project.tags) ? project.tags.join(", ") : (typeof project.tags === 'string' ? project.tags : ""),
+      features: Array.isArray(project.features) ? project.features.join(", ") : (typeof project.features === 'string' ? project.features : ""),
+      technologies: Array.isArray(project.technologies) ? project.technologies.join(", ") : (typeof project.technologies === 'string' ? project.technologies : ""),
+      year: String(project.year || ""),
+      client: project.client || "",
+      liveUrl: project.liveUrl || "",
+      sourceCodeUrl: project.sourceCodeUrl || "",
     });
   };
 

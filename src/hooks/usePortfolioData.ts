@@ -67,18 +67,21 @@ export const usePortfolioData = () => {
           title: project.title,
           category: project.category,
           description: project.description,
-          fullDescription: project.full_description || project.fullDescription,
+          fullDescription: project.full_description || "",
           image: project.image,
           tags: Array.isArray(project.tags) ? project.tags : JSON.parse(project.tags || '[]'),
           features: Array.isArray(project.features) ? project.features : JSON.parse(project.features || '[]'),
           technologies: Array.isArray(project.technologies) ? project.technologies : JSON.parse(project.technologies || '[]'),
           year: project.year,
           client: project.client,
-          liveUrl: project.live_url || project.liveUrl,
-          sourceCodeUrl: project.source_code_url || project.sourceCodeUrl,
+          liveUrl: project.live_url || "",
+          sourceCodeUrl: project.source_code_url || "",
         }));
         
         console.log('Transformed projects (first project):', transformedProjects[0]);
+        
+        // Store transformed projects in state
+        setProjects(transformedProjects);
 
         // Fetch clients
         const clientsRes = await fetch(`${apiUrl}/api/clients`);
