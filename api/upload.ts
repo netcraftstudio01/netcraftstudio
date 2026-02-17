@@ -4,6 +4,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+interface CloudinaryUploadOptions {
+  folder?: string;
+  resource_type: 'auto' | 'image' | 'video' | 'raw';
+  public_id?: string;
+  overwrite?: boolean;
+}
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -41,9 +48,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     }
 
     // Upload options
-    const uploadOptions: any = {
+    const uploadOptions: CloudinaryUploadOptions = {
       folder: folder || 'netcraft-studio',
-      resource_type: 'auto',
+      resource_type: 'auto' as const,
     };
 
     if (publicId) {

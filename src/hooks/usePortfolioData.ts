@@ -59,24 +59,26 @@ export const usePortfolioData = () => {
           throw new Error('Backend returned invalid JSON. Check if backend is running on port 5000.');
         }
         
+        console.log('Raw API response (first project):', projectsData[0]);
+        
         // Transform database data to match the app's format
         const transformedProjects = projectsData.map((project: ApiProject) => ({
           id: project.id,
           title: project.title,
           category: project.category,
           description: project.description,
-          fullDescription: project.full_description,
+          fullDescription: project.full_description || project.fullDescription,
           image: project.image,
           tags: Array.isArray(project.tags) ? project.tags : JSON.parse(project.tags || '[]'),
           features: Array.isArray(project.features) ? project.features : JSON.parse(project.features || '[]'),
           technologies: Array.isArray(project.technologies) ? project.technologies : JSON.parse(project.technologies || '[]'),
           year: project.year,
           client: project.client,
-          liveUrl: project.live_url,
-          sourceCodeUrl: project.source_code_url,
+          liveUrl: project.live_url || project.liveUrl,
+          sourceCodeUrl: project.source_code_url || project.sourceCodeUrl,
         }));
         
-        setProjects(transformedProjects);
+        console.log('Transformed projects (first project):', transformedProjects[0]);
 
         // Fetch clients
         const clientsRes = await fetch(`${apiUrl}/api/clients`);
