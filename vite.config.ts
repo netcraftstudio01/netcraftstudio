@@ -109,7 +109,9 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
-    // Proxy all /api requests to Express backend on port 5000
+    // DEVELOPMENT: Proxy all /api requests to Express backend on port 5000
+    // PRODUCTION (Vercel): API routes use serverless functions in /api directory
+    // Vercel automatically routes /api/* requests to the serverless functions
     proxy: {
       '/api': {
         target: 'http://localhost:5000',

@@ -1,19 +1,23 @@
 /**
  * Get the API base URL for fetch requests
  * - Development: Uses Vite proxy (empty string)
- * - Production: Uses VITE_API_URL environment variable
+ * - Production on Vercel: Uses empty string (same domain via /api/* serverless functions)
+ * - Production on other hosts: Uses VITE_API_URL environment variable
  */
 export const getApiUrl = (): string => {
   // In development, Vite proxy handles /api requests
-  // In production (Vercel), use the backend URL from environment
   if (import.meta.env.MODE === 'development') {
     return '';
   }
   
+  // In production with Vercel serverless functions, both frontend and backend
+  // are served from the same domain, so use empty string
   const backendUrl = import.meta.env.VITE_API_URL || '';
+  
   if (!backendUrl && import.meta.env.PROD) {
-    console.warn('VITE_API_URL is not set in production. API calls may fail.');
+    console.log('Using same-domain API (Vercel serverless functions)');
   }
+  
   return backendUrl;
 };
 
