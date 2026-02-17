@@ -42,8 +42,10 @@ export const usePortfolioData = () => {
         setLoading(true);
         setError(null);
 
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        console.log('Fetching from API:', apiUrl);
+        // In development, Vite proxy forwards /api to backend
+        // In production, same server serves both frontend and API
+        const apiUrl = '';
+        console.log('Fetching from API: /api (proxied to backend)');
 
         // Fetch portfolio projects
         const projectsRes = await fetch(`${apiUrl}/api/projects`);
@@ -55,7 +57,7 @@ export const usePortfolioData = () => {
           projectsData = JSON.parse(projectsText);
         } catch (e) {
           console.error('Invalid JSON response from /api/projects:', projectsText.substring(0, 200));
-          throw new Error('Backend returned invalid JSON. Check if backend is running and VITE_API_URL is correct.');
+          throw new Error('Backend returned invalid JSON. Check if backend is running on port 5000.');
         }
         
         // Transform database data to match the app's format
@@ -78,7 +80,7 @@ export const usePortfolioData = () => {
         setProjects(transformedProjects);
 
         // Fetch clients
-        const clientsRes = await fetch(`${apiUrl}/api/clients`);
+        const clientsRes = await fetch('/api/clients');
         if (clientsRes.ok) {
           const clientsText = await clientsRes.text();
           try {
@@ -90,7 +92,7 @@ export const usePortfolioData = () => {
         }
 
         // Fetch team members
-        const teamRes = await fetch(`${apiUrl}/api/team`);
+        const teamRes = await fetch('/api/team');
         if (teamRes.ok) {
           const teamText = await teamRes.text();
           try {

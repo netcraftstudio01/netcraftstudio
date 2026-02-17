@@ -103,9 +103,23 @@ const emailPlugin = {
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 5173,
     hmr: {
       overlay: false,
+    },
+    // Proxy all /api requests to Express backend on port 5000
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        // Log proxy requests in development
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log(`[Proxy] ${req.method} ${req.url} -> http://localhost:5000${req.url}`);
+          });
+        },
+      },
     },
   },
   plugins: [emailPlugin, react(), mode === "development" && componentTagger()].filter(Boolean),

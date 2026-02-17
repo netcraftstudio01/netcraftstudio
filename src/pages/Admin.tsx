@@ -80,9 +80,9 @@ const Admin = () => {
     const loadDataFromAPI = async () => {
       try {
         const [projectsRes, clientsRes, teamRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_URL}/api/projects`),
-          fetch(`${import.meta.env.VITE_API_URL}/api/clients`),
-          fetch(`${import.meta.env.VITE_API_URL}/api/team`),
+          fetch('/api/projects'),
+          fetch('/api/clients'),
+          fetch('/api/team'),
         ]);
 
         if (projectsRes.ok) {
@@ -182,14 +182,14 @@ const Admin = () => {
       let response;
       if (editingProjectId) {
         // Update existing project
-        response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${editingProjectId}`, {
+        response = await fetch(`/api/projects/${editingProjectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(projectData),
         });
       } else {
         // Create new project
-        response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects`, {
+        response = await fetch('/api/projects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(projectData),
@@ -257,7 +257,7 @@ const Admin = () => {
 
   const handleProjectDelete = async (projectId: number) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE',
       });
 
@@ -292,14 +292,14 @@ const Admin = () => {
       let response;
       if (editingClientId) {
         // Update existing client
-        response = await fetch(`${import.meta.env.VITE_API_URL}/api/clients/${editingClientId}`, {
+        response = await fetch(`/api/clients/${editingClientId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(clientData),
         });
       } else {
         // Create new client
-        response = await fetch(`${import.meta.env.VITE_API_URL}/api/clients`, {
+        response = await fetch('/api/clients', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(clientData),
@@ -358,7 +358,7 @@ const Admin = () => {
 
   const handleClientDelete = async (clientId: number) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/clients/${clientId}`, {
+      const response = await fetch(`/api/clients/${clientId}`, {
         method: 'DELETE',
       });
 
@@ -393,14 +393,14 @@ const Admin = () => {
       let response;
       if (editingTeamId) {
         // Update existing team member
-        response = await fetch(`${import.meta.env.VITE_API_URL}/api/team/${editingTeamId}`, {
+        response = await fetch(`/api/team/${editingTeamId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(teamData),
         });
       } else {
         // Create new team member
-        response = await fetch(`${import.meta.env.VITE_API_URL}/api/team`, {
+        response = await fetch('/api/team', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(teamData),
@@ -459,7 +459,7 @@ const Admin = () => {
 
   const handleTeamDelete = async (memberId: number) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/team/${memberId}`, {
+      const response = await fetch(`/api/team/${memberId}`, {
         method: 'DELETE',
       });
 

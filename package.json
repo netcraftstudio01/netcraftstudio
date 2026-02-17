@@ -4,13 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"node server.js\" \"vite\"",
+    "dev:frontend": "vite",
+    "dev:backend": "node server.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "start": "concurrently \"npm run dev\" \"node server.js\"",
+    "start": "concurrently \"node server.js\" \"vite\"",
     "start:prod": "npm run build && node server.js"
   },
   "dependencies": {

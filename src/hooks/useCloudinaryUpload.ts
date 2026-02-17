@@ -19,8 +19,8 @@ export const useCloudinaryUpload = () => {
             // Use custom name or filename without extension
             const fileName = customName || file.name.replace(/\.[^/.]+$/, "");
 
-            // Upload to Cloudinary via your backend
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/upload`, {
+            // Upload to Cloudinary via your backend (proxy handles routing)
+            const response = await fetch('/api/upload', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({

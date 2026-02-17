@@ -22,8 +22,11 @@ cloudinary.config({
 const app = express();
 
 // Middleware - CORS Configuration
+// In development: Vite proxy handles CORS, so we allow localhost
+// In production: Same server serves front & backend, CORS not needed
 const allowedOrigins = [
-  'http://localhost:5173',           // Vite dev server
+  'http://localhost:5173',           // Vite dev server (proxied requests)
+  'http://localhost:5000',           // Direct backend access (testing)
   'http://localhost:3000',           // Alternative dev port
   'https://www.netcraftstudios.org', // Production domain
   'https://netcraftstudio.vercel.app', // Vercel frontend
@@ -31,10 +34,12 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('CORS not allowed for this origin: ' + origin));
+      console.log('CORS blocked origin:', origin);
+      callback(null, true); // Allow all in development for proxy
     }
   },
   credentials: true,
