@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { PortfolioProject } from '@/data/siteData';
+import { getApiUrl } from '@/lib/api';
 
 interface ApiProject {
   id: string | number;
@@ -42,10 +43,8 @@ export const usePortfolioData = () => {
         setLoading(true);
         setError(null);
 
-        // In development, Vite proxy forwards /api to backend
-        // In production, same server serves both frontend and API
-        const apiUrl = '';
-        console.log('Fetching from API: /api (proxied to backend)');
+        const apiUrl = getApiUrl();
+        console.log(`Fetching from API: /api (${import.meta.env.MODE === 'development' ? 'proxied to backend' : `API: ${apiUrl}`})`);
 
         // Fetch portfolio projects
         const projectsRes = await fetch(`${apiUrl}/api/projects`);
@@ -80,7 +79,7 @@ export const usePortfolioData = () => {
         setProjects(transformedProjects);
 
         // Fetch clients
-        const clientsRes = await fetch('/api/clients');
+        const clientsRes = await fetch(`${apiUrl}/api/clients`);
         if (clientsRes.ok) {
           const clientsText = await clientsRes.text();
           try {
@@ -92,7 +91,7 @@ export const usePortfolioData = () => {
         }
 
         // Fetch team members
-        const teamRes = await fetch('/api/team');
+        const teamRes = await fetch(`${apiUrl}/api/team`);
         if (teamRes.ok) {
           const teamText = await teamRes.text();
           try {

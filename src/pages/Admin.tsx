@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCloudinaryUpload } from "@/hooks/useCloudinaryUpload";
+import { getApiUrl } from "@/lib/api";
 import {
   getClients,
   getPortfolioProjects,
@@ -79,10 +80,11 @@ const Admin = () => {
   useEffect(() => {
     const loadDataFromAPI = async () => {
       try {
+        const apiUrl = getApiUrl();
         const [projectsRes, clientsRes, teamRes] = await Promise.all([
-          fetch('/api/projects'),
-          fetch('/api/clients'),
-          fetch('/api/team'),
+          fetch(`${apiUrl}/api/projects`),
+          fetch(`${apiUrl}/api/clients`),
+          fetch(`${apiUrl}/api/team`),
         ]);
 
         if (projectsRes.ok) {
@@ -179,17 +181,18 @@ const Admin = () => {
     };
 
     try {
+      const apiUrl = getApiUrl();
       let response;
       if (editingProjectId) {
         // Update existing project
-        response = await fetch(`/api/projects/${editingProjectId}`, {
+        response = await fetch(`${apiUrl}/api/projects/${editingProjectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(projectData),
         });
       } else {
         // Create new project
-        response = await fetch('/api/projects', {
+        response = await fetch(`${apiUrl}/api/projects`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(projectData),
@@ -257,7 +260,8 @@ const Admin = () => {
 
   const handleProjectDelete = async (projectId: number) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}`, {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/projects/${projectId}`, {
         method: 'DELETE',
       });
 
@@ -289,17 +293,18 @@ const Admin = () => {
     };
 
     try {
+      const apiUrl = getApiUrl();
       let response;
       if (editingClientId) {
         // Update existing client
-        response = await fetch(`/api/clients/${editingClientId}`, {
+        response = await fetch(`${apiUrl}/api/clients/${editingClientId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(clientData),
         });
       } else {
         // Create new client
-        response = await fetch('/api/clients', {
+        response = await fetch(`${apiUrl}/api/clients`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(clientData),
@@ -358,7 +363,8 @@ const Admin = () => {
 
   const handleClientDelete = async (clientId: number) => {
     try {
-      const response = await fetch(`/api/clients/${clientId}`, {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/clients/${clientId}`, {
         method: 'DELETE',
       });
 
@@ -390,17 +396,18 @@ const Admin = () => {
     };
 
     try {
+      const apiUrl = getApiUrl();
       let response;
       if (editingTeamId) {
         // Update existing team member
-        response = await fetch(`/api/team/${editingTeamId}`, {
+        response = await fetch(`${apiUrl}/api/team/${editingTeamId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(teamData),
         });
       } else {
         // Create new team member
-        response = await fetch('/api/team', {
+        response = await fetch(`${apiUrl}/api/team`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(teamData),
@@ -459,7 +466,8 @@ const Admin = () => {
 
   const handleTeamDelete = async (memberId: number) => {
     try {
-      const response = await fetch(`/api/team/${memberId}`, {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/team/${memberId}`, {
         method: 'DELETE',
       });
 

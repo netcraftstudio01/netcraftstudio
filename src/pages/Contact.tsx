@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin, Send, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getApiUrl } from "@/lib/api";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -36,7 +37,8 @@ const Contact = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/send-email", {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/send-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getApiUrl } from '@/lib/api';
 
 export const useCloudinaryUpload = () => {
   const [uploading, setUploading] = useState(false);
@@ -20,7 +21,8 @@ export const useCloudinaryUpload = () => {
             const fileName = customName || file.name.replace(/\.[^/.]+$/, "");
 
             // Upload to Cloudinary via your backend (proxy handles routing)
-            const response = await fetch('/api/upload', {
+            const apiUrl = getApiUrl();
+            const response = await fetch(`${apiUrl}/api/upload`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({

@@ -4,6 +4,8 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { ViteDevServer } from "vite";
+import { IncomingMessage, ServerResponse } from "http";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -20,9 +22,9 @@ const transporter = nodemailer.createTransport({
 // Custom Vite plugin for email API
 const emailPlugin = {
   name: 'email-api',
-  configureServer(server: any) {
+  configureServer(server: ViteDevServer) {
     return () => {
-      server.middlewares.use('/api/send-email', async (req: any, res: any, next: any) => {
+      server.middlewares.use('/api/send-email', async (req: IncomingMessage, res: ServerResponse, _next: (err?: Error) => void) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;
           res.setHeader('Content-Type', 'application/json');
@@ -31,7 +33,7 @@ const emailPlugin = {
         }
 
         let body = '';
-        req.on('data', (chunk: any) => {
+        req.on('data', (chunk: Buffer) => {
           body += chunk.toString();
         });
 
@@ -114,8 +116,8 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         secure: false,
         // Log proxy requests in development
-        configure: (proxy, options) => {
-          proxy.on('proxyReq', (proxyReq, req, res) => {
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (_proxyReq, req, _res) => {
             console.log(`[Proxy] ${req.method} ${req.url} -> http://localhost:5000${req.url}`);
           });
         },

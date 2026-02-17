@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getApiUrl } from "@/lib/api";
 
 interface ConnectionStatus {
   storage: "connected" | "disconnected";
@@ -28,7 +29,8 @@ export const DatabaseStatus = () => {
     // Test database and email via health endpoint
     const testBackend = async () => {
       try {
-        const response = await fetch("/api/health");
+        const apiUrl = getApiUrl();
+        const response = await fetch(`${apiUrl}/api/health`);
         const data = await response.json();
         setStatus((prev) => ({
           ...prev,
