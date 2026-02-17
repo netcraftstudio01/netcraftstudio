@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "start": "concurrently \"npm run dev\" \"node server.js\""
+    "start": "concurrently \"npm run dev\" \"node server.js\"",
+    "start:prod": "npm run build && node server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
