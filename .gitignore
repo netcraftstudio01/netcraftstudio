@@ -7,12 +7,41 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Production
 dist
 dist-ssr
-*.local
-.env.example
+build
+
+# Environment variables (NEVER COMMIT .env files)
 .env
-.env.example
 .env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*.swn
 .DS_Store
+Thumbs.db
+
+# Cache
+.eslintcache
+.cache
+.parcel-cache
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+*.local
+.env.example (this is a template file)
+vite-env.d.ts.bak
