@@ -31,14 +31,14 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     // UPDATE team member
     if (req.method === 'PUT') {
-      const { name, role, image } = req.body;
+      const { name, role, image, displayOrder } = req.body;
 
       const result = await query(
         `UPDATE team_members SET
-          name = $1, role = $2, image = $3, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $4
+          name = $1, role = $2, image = $3, display_order = $4, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $5
         RETURNING *`,
-        [name, role, image, id]
+        [name, role, image, displayOrder ?? null, id]
       );
 
       if (result.rows.length === 0) {

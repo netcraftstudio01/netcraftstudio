@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCloudinaryUpload } from "@/hooks/useCloudinaryUpload";
+import { useLocalStorageUpload } from "@/hooks/useLocalStorageUpload";
+import { isBase64DataURI, convertToBase64 } from "@/lib/storageImageUtils";
 import { getApiUrl } from "@/lib/api";
 import {
   getClients,
@@ -44,6 +45,7 @@ const emptyTeamForm = {
   name: "",
   role: "",
   image: "",
+  displayOrder: "",
 };
 
 const ADMIN_PASSWORD = "Netcraft@2005";
@@ -56,6 +58,43 @@ const toList = (value: string) =>
 
 const getNextId = (items: Array<{ id: number }>) =>
   Math.max(0, ...items.map((item) => item.id)) + 1;
+
+const parseOrderInput = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const normalizeTeamMemberFromApi = (
+  member: Record<string, unknown>,
+  fallbackOrderById?: Map<number, number | undefined>
+): TeamMember => {
+  const rawOrder = member.display_order ?? member.displayOrder ?? member.order;
+  const parsedOrder = Number(rawOrder);
+  const memberId = member.id as number;
+  const fallbackOrder = fallbackOrderById?.get(memberId);
+  const displayOrder = Number.isFinite(parsedOrder)
+    ? parsedOrder
+    : Number.isFinite(fallbackOrder)
+      ? fallbackOrder
+      : undefined;
+  return {
+    id: memberId,
+    name: member.name as string,
+    role: (member.role as string) ?? "",
+    image: (member.image as string) ?? "",
+    displayOrder,
+  };
+};
+
+const sortTeamMembersByOrder = (members: TeamMember[]) =>
+  [...members].sort((a, b) => {
+    const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : Number.MAX_SAFE_INTEGER;
+    const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.id - b.id;
+  });
 
 // Transform API data from snake_case to camelCase
 const transformProjectFromAPI = (project: Record<string, unknown>): PortfolioProject => ({
@@ -74,8 +113,26 @@ const transformProjectFromAPI = (project: Record<string, unknown>): PortfolioPro
   sourceCodeUrl: (project.source_code_url || project.sourceCodeUrl || "") as string,
 });
 
+// Helper function to ensure image is in base64 format
+const ensureBase64Image = async (imageSrc: string): Promise<string> => {
+  if (!imageSrc) return "";
+  
+  // If already base64, return as-is
+  if (isBase64DataURI(imageSrc)) {
+    return imageSrc;
+  }
+
+  try {
+    // Convert file path or URL to base64
+    return await convertToBase64(imageSrc);
+  } catch (error) {
+    console.error('Error converting image to base64:', error);
+    return imageSrc; // Return original if conversion fails
+  }
+};
+
 const Admin = () => {
-  const { uploadImage: uploadToCloudinary, uploading: isUploading, uploadError } = useCloudinaryUpload();
+  const { uploadImage: uploadToLocalStorage, uploading: isUploading, uploadError } = useLocalStorageUpload();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
@@ -108,8 +165,22 @@ const Admin = () => {
           const projectsData = await projectsRes.json();
           // Transform API data from snake_case to camelCase
           const transformedProjects = projectsData.map(transformProjectFromAPI);
-          setProjects(transformedProjects);
-          setPortfolioProjects(transformedProjects, false);
+          
+          // Convert all images to base64 if not already
+          const projectsWithBase64 = await Promise.all(
+            transformedProjects.map(async (project) => {
+              if (project.image && !isBase64DataURI(project.image)) {
+                return {
+                  ...project,
+                  image: await ensureBase64Image(project.image).catch(() => project.image),
+                };
+              }
+              return project;
+            })
+          );
+          
+          setProjects(projectsWithBase64);
+          setPortfolioProjects(projectsWithBase64, false);
         } else {
           // Fallback to localStorage if API fails
           setProjects(getPortfolioProjects());
@@ -117,16 +188,51 @@ const Admin = () => {
 
         if (clientsRes.ok) {
           const clientsData = await clientsRes.json();
-          setClientList(clientsData);
-          setClients(clientsData, false);
+          
+          // Convert all client images to base64 if not already
+          const clientsWithBase64 = await Promise.all(
+            clientsData.map(async (client: Client) => {
+              if (client.image && !isBase64DataURI(client.image)) {
+                return {
+                  ...client,
+                  image: await ensureBase64Image(client.image).catch(() => client.image),
+                };
+              }
+              return client;
+            })
+          );
+          
+          setClientList(clientsWithBase64);
+          setClients(clientsWithBase64, false);
         } else {
           setClientList(getClients());
         }
 
         if (teamRes.ok) {
           const teamData = await teamRes.json();
-          setTeamMembersList(teamData);
-          setTeamMembers(teamData);
+          const storedTeam = getTeamMembers();
+          const fallbackOrderById = new Map(
+            storedTeam.map((member) => [member.id, member.displayOrder])
+          );
+          const normalizedTeam = teamData.map((member: Record<string, unknown>) =>
+            normalizeTeamMemberFromApi(member, fallbackOrderById)
+          );
+          
+          // Convert all team member images to base64 if not already
+          const teamWithBase64 = await Promise.all(
+            normalizedTeam.map(async (member) => {
+              if (member.image && !isBase64DataURI(member.image)) {
+                return {
+                  ...member,
+                  image: await ensureBase64Image(member.image).catch(() => member.image),
+                };
+              }
+              return member;
+            })
+          );
+          
+          setTeamMembersList(teamWithBase64);
+          setTeamMembers(teamWithBase64);
         } else {
           setTeamMembersList(getTeamMembers());
         }
@@ -255,22 +361,32 @@ const Admin = () => {
       liveUrl: project.liveUrl || "",
       sourceCodeUrl: project.sourceCodeUrl || "",
     });
+    
+    // Convert image to base64 if not already
+    if (project.image && !isBase64DataURI(project.image)) {
+      ensureBase64Image(project.image).then(base64Image => {
+        setProjectForm(prev => ({
+          ...prev,
+          image: base64Image,
+        }));
+      });
+    }
   };
 
   const handleProjectImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setUploadMessage("Uploading image to Cloudinary...");
+    setUploadMessage("Uploading image to local storage...");
     // Use project title as the image name (sanitized)
     const projectName = projectForm.title.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    const cloudinaryUrl = await uploadToCloudinary(file, 'netcraft-studio/projects', projectName);
-    if (cloudinaryUrl) {
+    const storageKey = await uploadToLocalStorage(file, 'netcraft-studio/projects', projectName);
+    if (storageKey) {
       setProjectForm((prev) => ({
         ...prev,
-        image: cloudinaryUrl,
+        image: storageKey,
       }));
-      setUploadMessage("Image uploaded successfully!");
+      setUploadMessage("Image uploaded successfully to local storage!");
       setTimeout(() => setUploadMessage(null), 3000);
     } else {
       setUploadMessage(`Upload failed: ${uploadError}`);
@@ -358,22 +474,32 @@ const Admin = () => {
       image: client.image,
       alt: client.alt ?? "",
     });
+    
+    // Convert image to base64 if not already
+    if (client.image && !isBase64DataURI(client.image)) {
+      ensureBase64Image(client.image).then(base64Image => {
+        setClientForm(prev => ({
+          ...prev,
+          image: base64Image,
+        }));
+      });
+    }
   };
 
   const handleClientImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setUploadMessage("Uploading image to Cloudinary...");
+    setUploadMessage("Uploading image to local storage...");
     // Use client name as the image name (sanitized)
     const clientName = clientForm.name.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    const cloudinaryUrl = await uploadToCloudinary(file, 'netcraft-studio/clients', clientName);
-    if (cloudinaryUrl) {
+    const storageKey = await uploadToLocalStorage(file, 'netcraft-studio/clients', clientName);
+    if (storageKey) {
       setClientForm((prev) => ({
         ...prev,
-        image: cloudinaryUrl,
+        image: storageKey,
       }));
-      setUploadMessage("Image uploaded successfully!");
+      setUploadMessage("Image uploaded successfully to local storage!");
       setTimeout(() => setUploadMessage(null), 3000);
     } else {
       setUploadMessage(`Upload failed: ${uploadError}`);
@@ -413,6 +539,7 @@ const Admin = () => {
       name: teamForm.name.trim(),
       role: teamForm.role.trim() || "Team Member",
       image: teamForm.image.trim(),
+      displayOrder: parseOrderInput(teamForm.displayOrder),
     };
 
     try {
@@ -440,11 +567,16 @@ const Admin = () => {
       }
 
       const savedMember = await response.json();
+      const nextMember = {
+        ...savedMember,
+        id: savedMember.id,
+        displayOrder: teamData.displayOrder ?? savedMember.displayOrder,
+      } as TeamMember;
       const nextTeam = editingTeamId
         ? teamMembers.map((member) =>
-            member.id === editingTeamId ? { ...savedMember, id: savedMember.id } : member
+            member.id === editingTeamId ? nextMember : member
           )
-        : [...teamMembers, { ...savedMember, id: savedMember.id }];
+        : [...teamMembers, nextMember];
 
       setTeamMembers(nextTeam);
       setTeamMembersList(nextTeam);
@@ -460,23 +592,36 @@ const Admin = () => {
       name: member.name,
       role: member.role,
       image: member.image,
+      displayOrder: Number.isFinite(member.displayOrder)
+        ? String(member.displayOrder)
+        : "",
     });
+    
+    // Convert image to base64 if not already
+    if (member.image && !isBase64DataURI(member.image)) {
+      ensureBase64Image(member.image).then(base64Image => {
+        setTeamForm(prev => ({
+          ...prev,
+          image: base64Image,
+        }));
+      });
+    }
   };
 
   const handleTeamImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setUploadMessage("Uploading image to Cloudinary...");
+    setUploadMessage("Uploading image to local storage...");
     // Use team member name as the image name (sanitized)
     const memberName = teamForm.name.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    const cloudinaryUrl = await uploadToCloudinary(file, 'netcraft-studio/team', memberName);
-    if (cloudinaryUrl) {
+    const storageKey = await uploadToLocalStorage(file, 'netcraft-studio/team', memberName);
+    if (storageKey) {
       setTeamForm((prev) => ({
         ...prev,
-        image: cloudinaryUrl,
+        image: storageKey,
       }));
-      setUploadMessage("Image uploaded successfully!");
+      setUploadMessage("Image uploaded successfully to local storage!");
       setTimeout(() => setUploadMessage(null), 3000);
     } else {
       setUploadMessage(`Upload failed: ${uploadError}`);
@@ -698,10 +843,10 @@ const Admin = () => {
                         image: event.target.value,
                       }))
                     }
-                    placeholder="/portfolio/example.png"
+                    placeholder="/portfolio/example.png or data:image/..."
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use a public URL or /img/... from the public folder, or upload below.
+                    Use a public URL, /img/... from public folder, or upload base64 image below.
                   </p>
                   {projectForm.image ? (
                     <div className="mt-2 rounded-lg border border-border/50 bg-muted/20 p-2">
@@ -723,7 +868,7 @@ const Admin = () => {
                     onChange={handleProjectImageUpload}
                     disabled={isUploading}
                   />
-                  {isUploading && <p className="text-sm text-blue-500">Uploading to Cloudinary...</p>}
+                  {isUploading && <p className="text-sm text-blue-500">Uploading image...</p>}
                   {uploadMessage && <p className="text-sm text-green-500">{uploadMessage}</p>}
                 </div>
                 <div className="space-y-2 sm:col-span-2">
@@ -920,10 +1065,10 @@ const Admin = () => {
                         image: event.target.value,
                       }))
                     }
-                    placeholder="/clients/logo.png"
+                    placeholder="/clients/logo.png or data:image/..."
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use a public URL or /img/... from the public folder, or upload below.
+                    Use a public URL, /img/clients/... from public folder, or upload base64 image below.
                   </p>
                   {clientForm.image ? (
                     <div className="mt-2 rounded-lg border border-border/50 bg-muted/20 p-2">
@@ -945,7 +1090,7 @@ const Admin = () => {
                     onChange={handleClientImageUpload}
                     disabled={isUploading}
                   />
-                  {isUploading && <p className="text-sm text-blue-500">Uploading to Cloudinary...</p>}
+                  {isUploading && <p className="text-sm text-blue-500">Uploading image...</p>}
                   {uploadMessage && <p className="text-sm text-green-500">{uploadMessage}</p>}
                 </div>
                 <div className="space-y-2 sm:col-span-2">
@@ -976,7 +1121,7 @@ const Admin = () => {
             <div className="gta-card p-6 space-y-4">
               <h2 className="text-xl font-display font-bold">Meet the Team</h2>
               <div className="grid gap-3 sm:grid-cols-2">
-                {teamMembers.map((member) => (
+                {sortTeamMembersByOrder(teamMembers).map((member) => (
                   <div
                     key={member.id}
                     className="flex items-start justify-between gap-4 p-3 rounded-lg bg-muted/30"
@@ -987,6 +1132,9 @@ const Admin = () => {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {member.role}
+                        {Number.isFinite(member.displayOrder)
+                          ? ` • Order ${member.displayOrder}`
+                          : ""}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -1053,6 +1201,25 @@ const Admin = () => {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="team-order">Display Order</Label>
+                  <Input
+                    id="team-order"
+                    type="number"
+                    min="1"
+                    value={teamForm.displayOrder}
+                    onChange={(event) =>
+                      setTeamForm((prev) => ({
+                        ...prev,
+                        displayOrder: event.target.value,
+                      }))
+                    }
+                    placeholder="1"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Lower numbers appear first. Leave empty to keep default order.
+                  </p>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="team-image">Image URL</Label>
                   <Input
                     id="team-image"
@@ -1063,10 +1230,10 @@ const Admin = () => {
                         image: event.target.value,
                       }))
                     }
-                    placeholder="/src/assets/team/name.jpg"
+                    placeholder="/src/assets/team/name.jpg or data:image/..."
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use a public URL or /img/... from the public folder, or upload below.
+                    Use a public URL, /img/team/... from public folder, or upload base64 image below.
                   </p>
                   {teamForm.image ? (
                     <div className="mt-2 rounded-lg border border-border/50 bg-muted/20 p-2">
@@ -1088,7 +1255,7 @@ const Admin = () => {
                     onChange={handleTeamImageUpload}
                     disabled={isUploading}
                   />
-                  {isUploading && <p className="text-sm text-blue-500">Uploading to Cloudinary...</p>}
+                  {isUploading && <p className="text-sm text-blue-500">Uploading image...</p>}
                   {uploadMessage && <p className="text-sm text-green-500">{uploadMessage}</p>}
                 </div>
               </div>

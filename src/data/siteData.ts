@@ -38,6 +38,7 @@ export type TeamMember = {
   name: string;
   role: string;
   image: string;
+  displayOrder?: number;
 };
 
 const STORAGE_KEYS = {
@@ -61,42 +62,49 @@ const DEFAULT_TEAM_MEMBERS: TeamMember[] = [
     name: "Prasanth",
     role: "CEO & Founder",
     image: prasanthImg,
+    displayOrder: 1,
   },
   {
     id: 2,
     name: "Thenmugilan",
     role: "Lead Developer",
     image: thenmugilanImg,
+    displayOrder: 2,
   },
   {
     id: 3,
     name: "Barath Nivash",
     role: "Backend Developer",
     image: barathImg,
+    displayOrder: 3,
   },
   {
     id: 4,
     name: "Gokul",
     role: "Backend Developer",
     image: gokulImg,
+    displayOrder: 4,
   },
   {
     id: 5,
     name: "Pavithra",
     role: "Admin",
     image: pavithraImg,
+    displayOrder: 5,
   },
   {
     id: 6,
     name: "Kaviya Shree",
     role: "Debug Engineer",
     image: kavyaImg,
+    displayOrder: 6,
   },
   {
     id: 7,
     name: "Keerthana",
     role: "UI/UX Designer",
     image: keerthanaImg,
+    displayOrder: 7,
   },
 ];
 
@@ -432,16 +440,28 @@ export const setClients = (clients: Client[], notify = true) => {
 export const getTeamMembers = () => {
   const storedTeam = readStorage(STORAGE_KEYS.team, DEFAULT_TEAM_MEMBERS);
 
-  return storedTeam.map((member) => {
+  const normalizedTeam = storedTeam.map((member) => {
     const needsDefaultImage =
       !member.image || member.image.startsWith("/src/assets/team/");
 
-    if (!needsDefaultImage) return member;
+    const rawOrder = (member as { displayOrder?: number; display_order?: number }).displayOrder
+      ?? (member as { displayOrder?: number; display_order?: number }).display_order;
+    const displayOrder = Number.isFinite(rawOrder) ? rawOrder : member.id;
+
+    if (!needsDefaultImage) return { ...member, displayOrder };
 
     return {
       ...member,
       image: TEAM_IMAGE_MAP.get(member.id) || member.image,
+      displayOrder,
     };
+  });
+
+  return normalizedTeam.sort((a, b) => {
+    const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : Number.MAX_SAFE_INTEGER;
+    const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.id - b.id;
   });
 };
 

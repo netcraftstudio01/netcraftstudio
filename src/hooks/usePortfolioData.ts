@@ -27,8 +27,29 @@ interface Client {
 interface TeamMember {
   id: string | number;
   name: string;
+  displayOrder?: number;
   [key: string]: unknown;
 }
+
+const sortTeamMembersByOrder = (members: TeamMember[]) =>
+  [...members].sort((a, b) => {
+    const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : Number.MAX_SAFE_INTEGER;
+    const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
+    const idA = typeof a.id === "number" ? a.id : Number(a.id);
+    const idB = typeof b.id === "number" ? b.id : Number(b.id);
+    if (Number.isFinite(idA) && Number.isFinite(idB)) return idA - idB;
+    return String(a.id).localeCompare(String(b.id));
+  });
+
+const normalizeTeamMember = (member: TeamMember) => ({
+  ...member,
+  displayOrder: Number.isFinite(member.displayOrder)
+    ? member.displayOrder
+    : Number.isFinite((member as { display_order?: number }).display_order)
+      ? (member as { display_order?: number }).display_order
+      : undefined,
+});
 
 export const usePortfolioData = () => {
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
@@ -101,7 +122,8 @@ export const usePortfolioData = () => {
           const teamText = await teamRes.text();
           try {
             const teamData = JSON.parse(teamText);
-            setTeamMembers(teamData);
+            const normalizedTeam = teamData.map(normalizeTeamMember);
+            setTeamMembers(sortTeamMembersByOrder(normalizedTeam));
           } catch (e) {
             console.error('Invalid JSON from /api/team:', teamText.substring(0, 200));
           }

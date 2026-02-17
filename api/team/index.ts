@@ -16,21 +16,21 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   try {
     // GET all team members
     if (req.method === 'GET') {
-      const result = await query('SELECT * FROM team_members ORDER BY created_at DESC');
+      const result = await query('SELECT * FROM team_members ORDER BY display_order ASC NULLS LAST, created_at DESC');
       return res.json(result.rows);
     }
 
     // CREATE team member
     if (req.method === 'POST') {
-      const { name, role, image } = req.body;
+      const { name, role, image, displayOrder } = req.body;
 
       if (!name) {
         return res.status(400).json({ error: 'Name is required' });
       }
 
       const result = await query(
-        'INSERT INTO team_members (name, role, image) VALUES ($1, $2, $3) RETURNING *',
-        [name, role || 'Team Member', image]
+        'INSERT INTO team_members (name, role, image, display_order) VALUES ($1, $2, $3, $4) RETURNING *',
+        [name, role || 'Team Member', image, displayOrder ?? null]
       );
 
       return res.status(201).json(result.rows[0]);

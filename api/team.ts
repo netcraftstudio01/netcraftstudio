@@ -27,22 +27,22 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         return res.json(result.rows[0]);
       } else {
         // Get all team members
-        const result = await query('SELECT * FROM team_members ORDER BY created_at DESC');
+        const result = await query('SELECT * FROM team_members ORDER BY display_order ASC NULLS LAST, created_at DESC');
         return res.json(result.rows);
       }
     }
 
     // CREATE team member
     if (req.method === 'POST') {
-      const { name, role, image } = req.body;
+      const { name, role, image, displayOrder } = req.body;
 
       if (!name) {
         return res.status(400).json({ error: 'Name is required' });
       }
 
       const result = await query(
-        'INSERT INTO team_members (name, role, image) VALUES ($1, $2, $3) RETURNING *',
-        [name, role || 'Team Member', image]
+        'INSERT INTO team_members (name, role, image, display_order) VALUES ($1, $2, $3, $4) RETURNING *',
+        [name, role || 'Team Member', image, displayOrder ?? null]
       );
 
       return res.status(201).json(result.rows[0]);
@@ -54,14 +54,14 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         return res.status(400).json({ error: 'Team member ID is required' });
       }
 
-      const { name, role, image } = req.body;
+      const { name, role, image, displayOrder } = req.body;
 
       const result = await query(
         `UPDATE team_members SET
-          name = $1, role = $2, image = $3, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $4
+          name = $1, role = $2, image = $3, display_order = $4, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $5
         RETURNING *`,
-        [name, role, image, id]
+        [name, role, image, displayOrder ?? null, id]
       );
 
       if (result.rows.length === 0) {

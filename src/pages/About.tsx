@@ -25,7 +25,13 @@ const About = () => {
       setClients(dbClients);
     }
     if (dbTeamMembers.length > 0) {
-      setTeamMembers(dbTeamMembers);
+      const sortedTeam = [...dbTeamMembers].sort((a, b) => {
+        const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : Number.MAX_SAFE_INTEGER;
+        const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : Number.MAX_SAFE_INTEGER;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.id - b.id;
+      });
+      setTeamMembers(sortedTeam);
     }
   }, [dbClients, dbTeamMembers]);
 
