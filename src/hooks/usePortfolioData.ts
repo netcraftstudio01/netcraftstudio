@@ -42,10 +42,21 @@ export const usePortfolioData = () => {
         setLoading(true);
         setError(null);
 
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        console.log('Fetching from API:', apiUrl);
+
         // Fetch portfolio projects
-        const projectsRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/projects`);
-        if (!projectsRes.ok) throw new Error('Failed to fetch projects');
-        const projectsData = await projectsRes.json();
+        const projectsRes = await fetch(`${apiUrl}/api/projects`);
+        if (!projectsRes.ok) throw new Error(`Failed to fetch projects: ${projectsRes.status}`);
+        
+        const projectsText = await projectsRes.text();
+        let projectsData;
+        try {
+          projectsData = JSON.parse(projectsText);
+        } catch (e) {
+          console.error('Invalid JSON response from /api/projects:', projectsText.substring(0, 200));
+          throw new Error('Backend returned invalid JSON. Check if backend is running and VITE_API_URL is correct.');
+        }
         
         // Transform database data to match the app's format
         const transformedProjects = projectsData.map((project: ApiProject) => ({
@@ -67,17 +78,27 @@ export const usePortfolioData = () => {
         setProjects(transformedProjects);
 
         // Fetch clients
-        const clientsRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/clients`);
+        const clientsRes = await fetch(`${apiUrl}/api/clients`);
         if (clientsRes.ok) {
-          const clientsData = await clientsRes.json();
-          setClients(clientsData);
+          const clientsText = await clientsRes.text();
+          try {
+            const clientsData = JSON.parse(clientsText);
+            setClients(clientsData);
+          } catch (e) {
+            console.error('Invalid JSON from /api/clients:', clientsText.substring(0, 200));
+          }
         }
 
         // Fetch team members
-        const teamRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/team`);
+        const teamRes = await fetch(`${apiUrl}/api/team`);
         if (teamRes.ok) {
-          const teamData = await teamRes.json();
-          setTeamMembers(teamData);
+          const teamText = await teamRes.text();
+          try {
+            const teamData = JSON.parse(teamText);
+            setTeamMembers(teamData);
+          } catch (e) {
+            console.error('Invalid JSON from /api/team:', teamText.substring(0, 200));
+          }
         }
       } catch (err) {
         console.error('Error fetching data:', err);
