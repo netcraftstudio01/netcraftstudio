@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "start": "concurrently \"npm run dev\" \"node server.js\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -42,8 +43,10 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@tanstack/react-query": "^5.83.0",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "concurrently": "^9.2.1",
     "cors": "^2.8.6",
     "date-fns": "^3.6.0",
     "dotenv": "^16.6.1",
@@ -54,6 +57,7 @@
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
     "nodemailer": "^6.10.1",
+    "pg": "^8.18.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",

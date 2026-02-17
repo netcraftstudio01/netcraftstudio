@@ -417,16 +417,16 @@ const notifyDataUpdated = () => {
 export const getPortfolioProjects = () =>
   readStorage(STORAGE_KEYS.portfolio, DEFAULT_PORTFOLIO_PROJECTS);
 
-export const setPortfolioProjects = (projects: PortfolioProject[]) => {
+export const setPortfolioProjects = (projects: PortfolioProject[], notify = true) => {
   writeStorage(STORAGE_KEYS.portfolio, projects);
-  notifyDataUpdated();
+  if (notify) notifyDataUpdated();
 };
 
 export const getClients = () => readStorage(STORAGE_KEYS.clients, DEFAULT_CLIENTS);
 
-export const setClients = (clients: Client[]) => {
+export const setClients = (clients: Client[], notify = true) => {
   writeStorage(STORAGE_KEYS.clients, clients);
-  notifyDataUpdated();
+  if (notify) notifyDataUpdated();
 };
 
 export const getTeamMembers = () => {

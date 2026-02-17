@@ -12,5 +12,6 @@ dist
 dist-ssr
 *.local
 .env
+.env.example
 .env.local
 .DS_Store

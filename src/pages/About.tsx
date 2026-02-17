@@ -5,14 +5,14 @@ import Footer from "@/components/layout/Footer";
 import { InfiniteSlider } from "@/components/ui/infinite-slider";
 import aboutBg from "@/assets/about-bg.jpg";
 import { Users, Target, Rocket, Award } from "lucide-react";
-import { getClients, getTeamMembers, type Client, type TeamMember } from "@/data/siteData";
+import { usePortfolioData } from "@/hooks/usePortfolioData";
+import type { Client, TeamMember } from "@/data/siteData";
 
 const About = () => {
   const containerRef = useRef(null);
-  const [clients, setClients] = useState<Client[]>(() => getClients());
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() =>
-    getTeamMembers()
-  );
+  const { clients: dbClients, teamMembers: dbTeamMembers } = usePortfolioData();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
@@ -21,23 +21,13 @@ const About = () => {
   const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   useEffect(() => {
-    const updateClients = () => setClients(getClients());
-    const updateTeam = () => setTeamMembers(getTeamMembers());
-
-    updateClients();
-    updateTeam();
-    window.addEventListener("ncs-data-updated", updateClients);
-    window.addEventListener("ncs-data-updated", updateTeam);
-    window.addEventListener("storage", updateClients);
-    window.addEventListener("storage", updateTeam);
-
-    return () => {
-      window.removeEventListener("ncs-data-updated", updateClients);
-      window.removeEventListener("ncs-data-updated", updateTeam);
-      window.removeEventListener("storage", updateClients);
-      window.removeEventListener("storage", updateTeam);
-    };
-  }, []);
+    if (dbClients.length > 0) {
+      setClients(dbClients);
+    }
+    if (dbTeamMembers.length > 0) {
+      setTeamMembers(dbTeamMembers);
+    }
+  }, [dbClients, dbTeamMembers]);
 
   return (
     <div ref={containerRef} className="min-h-screen bg-background overflow-x-hidden">

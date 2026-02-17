@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
 import portfolioBg from "@/assets/portfolio-bg.jpg";
-import { ExternalLink, Github, X } from "lucide-react";
+import { ExternalLink, Github, X, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePortfolioData } from "@/hooks/usePortfolioData";
 import {
   getPortfolioCategories,
-  getPortfolioProjects,
   type PortfolioProject,
 } from "@/data/siteData";
 
@@ -237,31 +237,25 @@ const ProjectDetailModal = ({
 };
 
 const Portfolio = () => {
+  const { projects: dbProjects, loading, error } = usePortfolioData();
   const [activeCategory, setActiveCategory] = useState("All");
-  const [projects, setProjects] = useState<PortfolioProject[]>(() =>
-    getPortfolioProjects()
-  );
+  const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(
     null
   );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // Update projects when database data is loaded
+  useEffect(() => {
+    if (dbProjects.length > 0) {
+      setProjects(dbProjects);
+    }
+  }, [dbProjects]);
+
   const categories = useMemo(
     () => getPortfolioCategories(projects),
     [projects]
   );
-
-  useEffect(() => {
-    const updateProjects = () => setProjects(getPortfolioProjects());
-
-    updateProjects();
-    window.addEventListener("ncs-data-updated", updateProjects);
-    window.addEventListener("storage", updateProjects);
-
-    return () => {
-      window.removeEventListener("ncs-data-updated", updateProjects);
-      window.removeEventListener("storage", updateProjects);
-    };
-  }, []);
 
   const filteredProjects =
     activeCategory === "All"
@@ -277,6 +271,30 @@ const Portfolio = () => {
     setIsDetailOpen(false);
     setSelectedProject(null);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        >
+          <Loader className="w-8 h-8 text-primary" />
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 font-display text-xl mb-4">Error loading portfolio</p>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">

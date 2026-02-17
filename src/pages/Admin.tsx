@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useCloudinaryUpload } from "@/hooks/useCloudinaryUpload";
 import {
   getClients,
   getPortfolioProjects,
@@ -56,9 +57,11 @@ const getNextId = (items: Array<{ id: number }>) =>
   Math.max(0, ...items.map((item) => item.id)) + 1;
 
 const Admin = () => {
+  const { uploadImage: uploadToCloudinary, uploading: isUploading, uploadError } = useCloudinaryUpload();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [projects, setProjects] = useState<PortfolioProject[]>(() =>
     getPortfolioProjects()
   );
@@ -74,19 +77,51 @@ const Admin = () => {
   const [teamForm, setTeamForm] = useState(emptyTeamForm);
 
   useEffect(() => {
-    const updateData = () => {
-      setProjects(getPortfolioProjects());
-      setClientList(getClients());
-      setTeamMembersList(getTeamMembers());
+    const loadDataFromAPI = async () => {
+      try {
+        const [projectsRes, clientsRes, teamRes] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_URL}/api/projects`),
+          fetch(`${import.meta.env.VITE_API_URL}/api/clients`),
+          fetch(`${import.meta.env.VITE_API_URL}/api/team`),
+        ]);
+
+        if (projectsRes.ok) {
+          const projectsData = await projectsRes.json();
+          setProjects(projectsData);
+          setPortfolioProjects(projectsData, false);
+        } else {
+          // Fallback to localStorage if API fails
+          setProjects(getPortfolioProjects());
+        }
+
+        if (clientsRes.ok) {
+          const clientsData = await clientsRes.json();
+          setClientList(clientsData);
+          setClients(clientsData, false);
+        } else {
+          setClientList(getClients());
+        }
+
+        if (teamRes.ok) {
+          const teamData = await teamRes.json();
+          setTeamMembersList(teamData);
+          setTeamMembers(teamData, false);
+        } else {
+          setTeamMembersList(getTeamMembers());
+        }
+      } catch (error) {
+        console.error('Error loading data from API, using localStorage:', error);
+        setProjects(getPortfolioProjects());
+        setClientList(getClients());
+        setTeamMembersList(getTeamMembers());
+      }
     };
 
-    updateData();
-    window.addEventListener("ncs-data-updated", updateData);
-    window.addEventListener("storage", updateData);
+    loadDataFromAPI();
+    window.addEventListener("ncs-data-updated", loadDataFromAPI);
 
     return () => {
-      window.removeEventListener("ncs-data-updated", updateData);
-      window.removeEventListener("storage", updateData);
+      window.removeEventListener("ncs-data-updated", loadDataFromAPI);
     };
   }, []);
 
@@ -123,15 +158,12 @@ const Admin = () => {
     setAuthError("");
   };
 
-  const handleProjectSubmit = (event: FormEvent) => {
+  const handleProjectSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
     if (!projectForm.title.trim()) return;
 
-    const updatedProject: PortfolioProject = {
-      id:
-        editingProjectId ??
-        getNextId(projects.length ? projects : [{ id: 0 }]),
+    const projectData = {
       title: projectForm.title.trim(),
       category: projectForm.category.trim() || "Uncategorized",
       description: projectForm.description.trim(),
@@ -146,15 +178,42 @@ const Admin = () => {
       sourceCodeUrl: projectForm.sourceCodeUrl.trim() || undefined,
     };
 
-    const nextProjects = editingProjectId
-      ? projects.map((project) =>
-          project.id === editingProjectId ? updatedProject : project
-        )
-      : [...projects, updatedProject];
+    try {
+      let response;
+      if (editingProjectId) {
+        // Update existing project
+        response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${editingProjectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(projectData),
+        });
+      } else {
+        // Create new project
+        response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(projectData),
+        });
+      }
 
-    setPortfolioProjects(nextProjects);
-    setProjects(nextProjects);
-    resetProjectForm();
+      if (!response.ok) {
+        console.error('Failed to save project');
+        return;
+      }
+
+      const savedProject = await response.json();
+      const nextProjects = editingProjectId
+        ? projects.map((project) =>
+            project.id === editingProjectId ? { ...savedProject, id: savedProject.id } : project
+          )
+        : [...projects, { ...savedProject, id: savedProject.id }];
+
+      setPortfolioProjects(nextProjects);
+      setProjects(nextProjects);
+      resetProjectForm();
+    } catch (error) {
+      console.error('Error saving project:', error);
+    }
   };
 
   const handleProjectEdit = (project: PortfolioProject) => {
@@ -175,52 +234,96 @@ const Admin = () => {
     });
   };
 
-  const handleProjectImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleProjectImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result !== "string") return;
+    setUploadMessage("Uploading image to Cloudinary...");
+    // Use project title as the image name (sanitized)
+    const projectName = projectForm.title.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    const cloudinaryUrl = await uploadToCloudinary(file, 'netcraft-studio/projects', projectName);
+    if (cloudinaryUrl) {
       setProjectForm((prev) => ({
         ...prev,
-        image: result as string,
+        image: cloudinaryUrl,
       }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleProjectDelete = (projectId: number) => {
-    const nextProjects = projects.filter((project) => project.id !== projectId);
-    setPortfolioProjects(nextProjects);
-    setProjects(nextProjects);
-    if (editingProjectId === projectId) {
-      resetProjectForm();
+      setUploadMessage("Image uploaded successfully!");
+      setTimeout(() => setUploadMessage(null), 3000);
+    } else {
+      setUploadMessage(`Upload failed: ${uploadError}`);
+      setTimeout(() => setUploadMessage(null), 3000);
     }
   };
 
-  const handleClientSubmit = (event: FormEvent) => {
+  const handleProjectDelete = async (projectId: number) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects/${projectId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        console.error('Failed to delete project');
+        return;
+      }
+
+      const nextProjects = projects.filter((project) => project.id !== projectId);
+      setPortfolioProjects(nextProjects);
+      setProjects(nextProjects);
+      if (editingProjectId === projectId) {
+        resetProjectForm();
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error);
+    }
+  };
+
+  const handleClientSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
     if (!clientForm.name.trim()) return;
 
-    const updatedClient: Client = {
-      id: editingClientId ?? getNextId(clients.length ? clients : [{ id: 0 }]),
+    const clientData = {
       name: clientForm.name.trim(),
       image: clientForm.image.trim(),
       alt: clientForm.alt.trim() || clientForm.name.trim(),
     };
 
-    const nextClients = editingClientId
-      ? clients.map((client) =>
-          client.id === editingClientId ? updatedClient : client
-        )
-      : [...clients, updatedClient];
+    try {
+      let response;
+      if (editingClientId) {
+        // Update existing client
+        response = await fetch(`${import.meta.env.VITE_API_URL}/api/clients/${editingClientId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(clientData),
+        });
+      } else {
+        // Create new client
+        response = await fetch(`${import.meta.env.VITE_API_URL}/api/clients`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(clientData),
+        });
+      }
 
-    setClients(nextClients);
-    setClientList(nextClients);
-    resetClientForm();
+      if (!response.ok) {
+        console.error('Failed to save client');
+        return;
+      }
+
+      const savedClient = await response.json();
+      const nextClients = editingClientId
+        ? clients.map((client) =>
+            client.id === editingClientId ? { ...savedClient, id: savedClient.id } : client
+          )
+        : [...clients, { ...savedClient, id: savedClient.id }];
+
+      setClients(nextClients);
+      setClientList(nextClients);
+      resetClientForm();
+    } catch (error) {
+      console.error('Error saving client:', error);
+    }
   };
 
   const handleClientEdit = (client: Client) => {
@@ -232,52 +335,96 @@ const Admin = () => {
     });
   };
 
-  const handleClientImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleClientImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result !== "string") return;
+    setUploadMessage("Uploading image to Cloudinary...");
+    // Use client name as the image name (sanitized)
+    const clientName = clientForm.name.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    const cloudinaryUrl = await uploadToCloudinary(file, 'netcraft-studio/clients', clientName);
+    if (cloudinaryUrl) {
       setClientForm((prev) => ({
         ...prev,
-        image: result as string,
+        image: cloudinaryUrl,
       }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleClientDelete = (clientId: number) => {
-    const nextClients = clients.filter((client) => client.id !== clientId);
-    setClients(nextClients);
-    setClientList(nextClients);
-    if (editingClientId === clientId) {
-      resetClientForm();
+      setUploadMessage("Image uploaded successfully!");
+      setTimeout(() => setUploadMessage(null), 3000);
+    } else {
+      setUploadMessage(`Upload failed: ${uploadError}`);
+      setTimeout(() => setUploadMessage(null), 3000);
     }
   };
 
-  const handleTeamSubmit = (event: FormEvent) => {
+  const handleClientDelete = async (clientId: number) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/clients/${clientId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        console.error('Failed to delete client');
+        return;
+      }
+
+      const nextClients = clients.filter((client) => client.id !== clientId);
+      setClients(nextClients);
+      setClientList(nextClients);
+      if (editingClientId === clientId) {
+        resetClientForm();
+      }
+    } catch (error) {
+      console.error('Error deleting client:', error);
+    }
+  };
+
+  const handleTeamSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
     if (!teamForm.name.trim()) return;
 
-    const updatedMember: TeamMember = {
-      id: editingTeamId ?? getNextId(teamMembers.length ? teamMembers : [{ id: 0 }]),
+    const teamData = {
       name: teamForm.name.trim(),
       role: teamForm.role.trim() || "Team Member",
       image: teamForm.image.trim(),
     };
 
-    const nextTeam = editingTeamId
-      ? teamMembers.map((member) =>
-          member.id === editingTeamId ? updatedMember : member
-        )
-      : [...teamMembers, updatedMember];
+    try {
+      let response;
+      if (editingTeamId) {
+        // Update existing team member
+        response = await fetch(`${import.meta.env.VITE_API_URL}/api/team/${editingTeamId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(teamData),
+        });
+      } else {
+        // Create new team member
+        response = await fetch(`${import.meta.env.VITE_API_URL}/api/team`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(teamData),
+        });
+      }
 
-    setTeamMembers(nextTeam);
-    setTeamMembersList(nextTeam);
-    resetTeamForm();
+      if (!response.ok) {
+        console.error('Failed to save team member');
+        return;
+      }
+
+      const savedMember = await response.json();
+      const nextTeam = editingTeamId
+        ? teamMembers.map((member) =>
+            member.id === editingTeamId ? { ...savedMember, id: savedMember.id } : member
+          )
+        : [...teamMembers, { ...savedMember, id: savedMember.id }];
+
+      setTeamMembers(nextTeam);
+      setTeamMembersList(nextTeam);
+      resetTeamForm();
+    } catch (error) {
+      console.error('Error saving team member:', error);
+    }
   };
 
   const handleTeamEdit = (member: TeamMember) => {
@@ -289,28 +436,46 @@ const Admin = () => {
     });
   };
 
-  const handleTeamImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleTeamImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result !== "string") return;
+    setUploadMessage("Uploading image to Cloudinary...");
+    // Use team member name as the image name (sanitized)
+    const memberName = teamForm.name.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    const cloudinaryUrl = await uploadToCloudinary(file, 'netcraft-studio/team', memberName);
+    if (cloudinaryUrl) {
       setTeamForm((prev) => ({
         ...prev,
-        image: result as string,
+        image: cloudinaryUrl,
       }));
-    };
-    reader.readAsDataURL(file);
+      setUploadMessage("Image uploaded successfully!");
+      setTimeout(() => setUploadMessage(null), 3000);
+    } else {
+      setUploadMessage(`Upload failed: ${uploadError}`);
+      setTimeout(() => setUploadMessage(null), 3000);
+    }
   };
 
-  const handleTeamDelete = (memberId: number) => {
-    const nextTeam = teamMembers.filter((member) => member.id !== memberId);
-    setTeamMembers(nextTeam);
-    setTeamMembersList(nextTeam);
-    if (editingTeamId === memberId) {
-      resetTeamForm();
+  const handleTeamDelete = async (memberId: number) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/team/${memberId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        console.error('Failed to delete team member');
+        return;
+      }
+
+      const nextTeam = teamMembers.filter((member) => member.id !== memberId);
+      setTeamMembers(nextTeam);
+      setTeamMembersList(nextTeam);
+      if (editingTeamId === memberId) {
+        resetTeamForm();
+      }
+    } catch (error) {
+      console.error('Error deleting team member:', error);
     }
   };
 
@@ -528,7 +693,10 @@ const Admin = () => {
                     type="file"
                     accept="image/*"
                     onChange={handleProjectImageUpload}
+                    disabled={isUploading}
                   />
+                  {isUploading && <p className="text-sm text-blue-500">Uploading to Cloudinary...</p>}
+                  {uploadMessage && <p className="text-sm text-green-500">{uploadMessage}</p>}
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="project-description">Short Description</Label>
@@ -747,7 +915,10 @@ const Admin = () => {
                     type="file"
                     accept="image/*"
                     onChange={handleClientImageUpload}
+                    disabled={isUploading}
                   />
+                  {isUploading && <p className="text-sm text-blue-500">Uploading to Cloudinary...</p>}
+                  {uploadMessage && <p className="text-sm text-green-500">{uploadMessage}</p>}
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="client-alt">Alt Text</Label>
@@ -887,7 +1058,10 @@ const Admin = () => {
                     type="file"
                     accept="image/*"
                     onChange={handleTeamImageUpload}
+                    disabled={isUploading}
                   />
+                  {isUploading && <p className="text-sm text-blue-500">Uploading to Cloudinary...</p>}
+                  {uploadMessage && <p className="text-sm text-green-500">{uploadMessage}</p>}
                 </div>
               </div>
 
