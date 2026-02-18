@@ -3,10 +3,20 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// Get all projects
+// Get all projects - optimized with specific fields and caching
 router.get('/', async (req, res) => {
   try {
-    const result = await query('SELECT * FROM portfolio_projects ORDER BY created_at DESC');
+    // Select only required fields for list view (excludes large text fields when not needed)
+    const fields = req.query.full === 'true' 
+      ? '*' 
+      : 'id, title, category, description, image, tags, technologies, year, client, live_url, source_code_url, created_at';
+    
+    const result = await query(`SELECT ${fields} FROM portfolio_projects ORDER BY created_at DESC`);
+    
+    // Set cache headers for better performance (cache for 5 minutes)
+    res.set('Cache-Control', 'public, max-age=300');
+    res.set('ETag', `W/"projects-${result.rows.length}-${Date.now()}"`);
+    
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching projects:', error);

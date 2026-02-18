@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import type { PortfolioProject } from '@/data/siteData';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { PortfolioProject, Client } from '@/data/siteData';
 import { getApiUrl } from '@/lib/api';
 
 interface ApiProject {
@@ -18,126 +18,349 @@ interface ApiProject {
   source_code_url: string;
 }
 
-interface Client {
-  id: string | number;
-  name: string;
-  [key: string]: unknown;
+interface UsePortfolioDataOptions {
+  /** Whether to fetch projects data */
+  fetchProjects?: boolean;
+  /** Whether to fetch clients data */
+  fetchClients?: boolean;
 }
 
-interface TeamMember {
-  id: string | number;
-  name: string;
-  displayOrder?: number;
-  [key: string]: unknown;
-}
+// In-memory cache to prevent duplicate requests across component remounts
+const dataCache: {
+  projects: PortfolioProject[] | null;
+  clients: Client[] | null;
+  projectsTimestamp: number;
+  clientsTimestamp: number;
+  ttl: number; // Time-to-live in milliseconds
+} = {
+  projects: null,
+  clients: null,
+  projectsTimestamp: 0,
+  clientsTimestamp: 0,
+  ttl: 5 * 60 * 1000, // 5 minutes cache
+};
 
-const sortTeamMembersByOrder = (members: TeamMember[]) =>
-  [...members].sort((a, b) => {
-    const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : Number.MAX_SAFE_INTEGER;
-    const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : Number.MAX_SAFE_INTEGER;
-    if (orderA !== orderB) return orderA - orderB;
-    const idA = typeof a.id === "number" ? a.id : Number(a.id);
-    const idB = typeof b.id === "number" ? b.id : Number(b.id);
-    if (Number.isFinite(idA) && Number.isFinite(idB)) return idA - idB;
-    return String(a.id).localeCompare(String(b.id));
-  });
+// Request deduplication - prevents multiple simultaneous fetches
+let projectsFetchPromise: Promise<PortfolioProject[] | null> | null = null;
+let clientsFetchPromise: Promise<Client[] | null> | null = null;
 
-const normalizeTeamMember = (member: TeamMember) => ({
-  ...member,
-  displayOrder: Number.isFinite(member.displayOrder)
-    ? member.displayOrder
-    : Number.isFinite((member as { display_order?: number }).display_order)
-      ? (member as { display_order?: number }).display_order
-      : undefined,
-});
+const isProjectsCacheValid = () => {
+  return dataCache.projectsTimestamp > 0 && Date.now() - dataCache.projectsTimestamp < dataCache.ttl;
+};
 
-export const usePortfolioData = () => {
-  const [projects, setProjects] = useState<PortfolioProject[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
+const isClientsCacheValid = () => {
+  return dataCache.clientsTimestamp > 0 && Date.now() - dataCache.clientsTimestamp < dataCache.ttl;
+};
+
+const clearCache = () => {
+  dataCache.projects = null;
+  dataCache.clients = null;
+  dataCache.projectsTimestamp = 0;
+  dataCache.clientsTimestamp = 0;
+};
+
+export const usePortfolioData = (options: UsePortfolioDataOptions = {}) => {
+  const { fetchProjects = false, fetchClients = false } = options;
+  
+  const [projects, setProjects] = useState<PortfolioProject[]>(
+    fetchProjects && dataCache.projects ? dataCache.projects : []
+  );
+  const [clients, setClients] = useState<Client[]>(
+    fetchClients && dataCache.clients ? dataCache.clients : []
+  );
+  const [loading, setLoading] = useState(
+    (fetchProjects && !isProjectsCacheValid()) || (fetchClients && !isClientsCacheValid())
+  );
   const [error, setError] = useState<string | null>(null);
+  const isMounted = useRef(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  // Transform API project data to app format
+  const transformProject = useCallback((project: ApiProject): PortfolioProject => ({
+    id: typeof project.id === 'number' ? project.id : parseInt(String(project.id), 10),
+    title: project.title,
+    category: project.category,
+    description: project.description,
+    fullDescription: project.full_description || "",
+    image: project.image,
+    tags: Array.isArray(project.tags) ? project.tags : JSON.parse(project.tags || '[]'),
+    features: Array.isArray(project.features) ? project.features : JSON.parse(project.features || '[]'),
+    technologies: Array.isArray(project.technologies) ? project.technologies : JSON.parse(project.technologies || '[]'),
+    year: String(project.year),
+    client: project.client,
+    liveUrl: project.live_url || "",
+    sourceCodeUrl: project.source_code_url || "",
+  }), []);
+
+  // Fetch projects from API
+  const fetchProjectsData = useCallback(async (): Promise<PortfolioProject[] | null> => {
+    if (projectsFetchPromise) return projectsFetchPromise;
+    
+    projectsFetchPromise = (async () => {
       try {
-        setLoading(true);
-        setError(null);
-
         const apiUrl = getApiUrl();
-        console.log(`Fetching from API: /api (${import.meta.env.MODE === 'development' ? 'proxied to backend' : `API: ${apiUrl}`})`);
-
-        // Fetch portfolio projects
-        const projectsRes = await fetch(`${apiUrl}/api/projects`);
-        if (!projectsRes.ok) throw new Error(`Failed to fetch projects: ${projectsRes.status}`);
-        
-        const projectsText = await projectsRes.text();
-        let projectsData;
-        try {
-          projectsData = JSON.parse(projectsText);
-        } catch (e) {
-          console.error('Invalid JSON response from /api/projects:', projectsText.substring(0, 200));
-          throw new Error('Backend returned invalid JSON. Check if backend is running on port 5000.');
+        const res = await fetch(`${apiUrl}/api/projects`);
+        if (!res.ok) {
+          console.error(`Projects API error ${res.status}`);
+          return null;
         }
+        const text = await res.text();
+        const data = JSON.parse(text) as ApiProject[];
+        const transformedProjects = data.map(transformProject);
         
-        console.log('Raw API response (first project):', projectsData[0]);
+        // Cache the data
+        dataCache.projects = transformedProjects;
+        dataCache.projectsTimestamp = Date.now();
         
-        // Transform database data to match the app's format
-        const transformedProjects = projectsData.map((project: ApiProject) => ({
-          id: project.id,
-          title: project.title,
-          category: project.category,
-          description: project.description,
-          fullDescription: project.full_description || "",
-          image: project.image,
-          tags: Array.isArray(project.tags) ? project.tags : JSON.parse(project.tags || '[]'),
-          features: Array.isArray(project.features) ? project.features : JSON.parse(project.features || '[]'),
-          technologies: Array.isArray(project.technologies) ? project.technologies : JSON.parse(project.technologies || '[]'),
-          year: project.year,
-          client: project.client,
-          liveUrl: project.live_url || "",
-          sourceCodeUrl: project.source_code_url || "",
+        return transformedProjects;
+      } catch (e) {
+        console.error('Failed to fetch projects:', e);
+        return null;
+      } finally {
+        projectsFetchPromise = null;
+      }
+    })();
+    
+    return projectsFetchPromise;
+  }, [transformProject]);
+
+  // Fetch clients from API
+  const fetchClientsData = useCallback(async (): Promise<Client[] | null> => {
+    if (clientsFetchPromise) return clientsFetchPromise;
+    
+    clientsFetchPromise = (async () => {
+      try {
+        const apiUrl = getApiUrl();
+        const res = await fetch(`${apiUrl}/api/clients`);
+        if (!res.ok) {
+          console.error(`Clients API error ${res.status}`);
+          return null;
+        }
+        const text = await res.text();
+        const data = JSON.parse(text) as Record<string, unknown>[];
+        const typedClients = data.map(c => ({
+          id: typeof c.id === 'number' ? c.id : parseInt(String(c.id), 10),
+          name: String(c.name || ''),
+          image: String(c.image || ''),
+          alt: String(c.alt || c.name || ''),
         }));
         
-        console.log('Transformed projects (first project):', transformedProjects[0]);
+        // Cache the data
+        dataCache.clients = typedClients;
+        dataCache.clientsTimestamp = Date.now();
         
-        // Store transformed projects in state
-        setProjects(transformedProjects);
+        return typedClients;
+      } catch (e) {
+        console.error('Failed to fetch clients:', e);
+        return null;
+      } finally {
+        clientsFetchPromise = null;
+      }
+    })();
+    
+    return clientsFetchPromise;
+  }, []);
 
-        // Fetch clients
-        const clientsRes = await fetch(`${apiUrl}/api/clients`);
-        if (clientsRes.ok) {
-          const clientsText = await clientsRes.text();
-          try {
-            const clientsData = JSON.parse(clientsText);
+  useEffect(() => {
+    isMounted.current = true;
+    
+    // Only fetch what's requested and not cached
+    const shouldFetchProjects = fetchProjects && !isProjectsCacheValid();
+    const shouldFetchClients = fetchClients && !isClientsCacheValid();
+    
+    // Return cached data immediately if valid
+    if (fetchProjects && isProjectsCacheValid() && dataCache.projects) {
+      setProjects(dataCache.projects);
+    }
+    if (fetchClients && isClientsCacheValid() && dataCache.clients) {
+      setClients(dataCache.clients);
+    }
+    
+    // If no fetching needed, complete loading
+    if (!shouldFetchProjects && !shouldFetchClients) {
+      setLoading(false);
+      return;
+    }
+
+    const performFetch = async () => {
+      if (!isMounted.current) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      console.log(`Fetching from API: ${shouldFetchProjects ? 'projects' : ''} ${shouldFetchClients ? 'clients' : ''} (${import.meta.env.MODE === 'development' ? 'proxied to backend' : `direct API`})`);
+
+      try {
+        // Only fetch what's requested
+        const fetchPromises: Promise<any>[] = [];
+        
+        if (shouldFetchProjects) {
+          fetchPromises.push(fetchProjectsData());
+        }
+        
+        if (shouldFetchClients) {
+          fetchPromises.push(fetchClientsData());
+        }
+
+        const results = await Promise.all(fetchPromises);
+        
+        if (!isMounted.current) return;
+
+        let resultIndex = 0;
+        
+        // Process results in order
+        if (shouldFetchProjects) {
+          const projectsData = results[resultIndex++];
+          if (projectsData) {
+            setProjects(projectsData);
+          }
+        }
+        
+        if (shouldFetchClients) {
+          const clientsData = results[resultIndex++];
+          if (clientsData) {
             setClients(clientsData);
-          } catch (e) {
-            console.error('Invalid JSON from /api/clients:', clientsText.substring(0, 200));
           }
         }
-
-        // Fetch team members
-        const teamRes = await fetch(`${apiUrl}/api/team`);
-        if (teamRes.ok) {
-          const teamText = await teamRes.text();
-          try {
-            const teamData = JSON.parse(teamText);
-            const normalizedTeam = teamData.map(normalizeTeamMember);
-            setTeamMembers(sortTeamMembersByOrder(normalizedTeam));
-          } catch (e) {
-            console.error('Invalid JSON from /api/team:', teamText.substring(0, 200));
-          }
-        }
+        
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch data');
+        if (isMounted.current) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch data');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted.current) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchData();
-  }, []);
+    performFetch();
+    
+    return () => {
+      isMounted.current = false;
+    };
+  }, [fetchProjects, fetchClients, fetchProjectsData, fetchClientsData]);
 
-  return { projects, clients, teamMembers, loading, error };
+  // Function to manually refresh data (clears relevant cache)
+  const refresh = useCallback(async () => {
+    if (fetchProjects) {
+      dataCache.projects = null;
+      dataCache.projectsTimestamp = 0;
+    }
+    if (fetchClients) {
+      dataCache.clients = null;
+      dataCache.clientsTimestamp = 0;
+    }
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const fetchPromises: Promise<any>[] = [];
+      
+      if (fetchProjects) {
+        fetchPromises.push(fetchProjectsData());
+      }
+      
+      if (fetchClients) {
+        fetchPromises.push(fetchClientsData());
+      }
+      
+      const results = await Promise.all(fetchPromises);
+      
+      if (fetchProjects) {
+        const projectsData = results[fetchClients ? 0 : 0];
+        if (projectsData && isMounted.current) {
+          setProjects(projectsData);
+        }
+      }
+      
+      if (fetchClients) {
+        const clientsData = results[fetchProjects ? 1 : 0];
+        if (clientsData && isMounted.current) {
+          setClients(clientsData);
+        }
+      }
+    } catch (error) {
+      if (isMounted.current) {
+        setError(error instanceof Error ? error.message : 'Failed to refresh data');
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+    }
+  }, [fetchProjects, fetchClients, fetchProjectsData, fetchClientsData]);
+
+  // Individual refetch functions
+  const refetchProjects = useCallback(async () => {
+    if (!fetchProjects) return;
+    
+    dataCache.projects = null;
+    dataCache.projectsTimestamp = 0;
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const projectsData = await fetchProjectsData();
+      if (projectsData && isMounted.current) {
+        setProjects(projectsData);
+      }
+    } catch (error) {
+      if (isMounted.current) {
+        setError(error instanceof Error ? error.message : 'Failed to fetch projects');
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+    }
+  }, [fetchProjects, fetchProjectsData]);
+
+  const refetchClients = useCallback(async () => {
+    if (!fetchClients) return;
+    
+    dataCache.clients = null;
+    dataCache.clientsTimestamp = 0;
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const clientsData = await fetchClientsData();
+      if (clientsData && isMounted.current) {
+        setClients(clientsData);
+      }
+    } catch (error) {
+      if (isMounted.current) {
+        setError(error instanceof Error ? error.message : 'Failed to fetch clients');
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+    }
+  }, [fetchClients, fetchClientsData]);
+
+  return { 
+    projects, 
+    clients, 
+    loading, 
+    error, 
+    refresh,
+    refetchProjects,
+    refetchClients
+  };
+};
+
+// Export cache control for admin panel
+export { clearCache as clearPortfolioCache };
+
+// Convenience hooks for specific data types
+export const useProjects = (): { projects: PortfolioProject[], loading: boolean, error: string | null, refresh: () => Promise<void> } => {
+  const { projects, loading, error, refresh } = usePortfolioData({ fetchProjects: true });
+  return { projects, loading, error, refresh };
+};
+
+export const useClients = (): { clients: Client[], loading: boolean, error: string | null, refresh: () => Promise<void> } => {
+  const { clients, loading, error, refresh } = usePortfolioData({ fetchClients: true });
+  return { clients, loading, error, refresh };
 };

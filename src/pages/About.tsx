@@ -6,13 +6,17 @@ import { InfiniteSlider } from "@/components/ui/infinite-slider";
 import aboutBg from "@/assets/about-bg.jpg";
 import { Users, Target, Rocket, Award } from "lucide-react";
 import { usePortfolioData } from "@/hooks/usePortfolioData";
-import type { Client, TeamMember } from "@/data/siteData";
+import { getTeamMembers, type Client, type TeamMember } from "@/data/siteData";
+
+// Static team data - loaded once at import time
+const STATIC_TEAM_MEMBERS = getTeamMembers();
 
 const About = () => {
   const containerRef = useRef(null);
-  const { clients: dbClients, teamMembers: dbTeamMembers } = usePortfolioData();
+  const { clients: dbClients } = usePortfolioData({ fetchClients: true });
   const [clients, setClients] = useState<Client[]>([]);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  // Team members are static - no database fetch needed
+  const teamMembers = STATIC_TEAM_MEMBERS;
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
@@ -24,16 +28,7 @@ const About = () => {
     if (dbClients.length > 0) {
       setClients(dbClients);
     }
-    if (dbTeamMembers.length > 0) {
-      const sortedTeam = [...dbTeamMembers].sort((a, b) => {
-        const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : Number.MAX_SAFE_INTEGER;
-        const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : Number.MAX_SAFE_INTEGER;
-        if (orderA !== orderB) return orderA - orderB;
-        return a.id - b.id;
-      });
-      setTeamMembers(sortedTeam);
-    }
-  }, [dbClients, dbTeamMembers]);
+  }, [dbClients]);
 
   return (
     <div ref={containerRef} className="min-h-screen bg-background overflow-x-hidden">

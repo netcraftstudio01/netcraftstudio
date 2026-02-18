@@ -5,19 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useLocalStorageUpload } from "@/hooks/useLocalStorageUpload";
-import { isBase64DataURI, convertToBase64 } from "@/lib/storageImageUtils";
+import { useCloudinaryUpload } from "@/hooks/useCloudinaryUpload";
+import { useCloudinaryMigration } from "@/hooks/useCloudinaryMigration";
 import { getApiUrl } from "@/lib/api";
 import {
   getClients,
   getPortfolioProjects,
-  getTeamMembers,
   setClients,
   setPortfolioProjects,
-  setTeamMembers,
   type Client,
   type PortfolioProject,
-  type TeamMember,
 } from "@/data/siteData";
 
 const emptyProjectForm = {
@@ -41,60 +38,16 @@ const emptyClientForm = {
   alt: "",
 };
 
-const emptyTeamForm = {
-  name: "",
-  role: "",
-  image: "",
-  displayOrder: "",
-};
-
 const ADMIN_PASSWORD = "Netcraft@2005";
 
-const toList = (value: string) =>
-  value
+const toList = (value: string | undefined | null) =>
+  String(value || "")
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
 
 const getNextId = (items: Array<{ id: number }>) =>
   Math.max(0, ...items.map((item) => item.id)) + 1;
-
-const parseOrderInput = (value: string) => {
-  const trimmed = value.trim();
-  if (!trimmed) return undefined;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : undefined;
-};
-
-const normalizeTeamMemberFromApi = (
-  member: Record<string, unknown>,
-  fallbackOrderById?: Map<number, number | undefined>
-): TeamMember => {
-  const rawOrder = member.display_order ?? member.displayOrder ?? member.order;
-  const parsedOrder = Number(rawOrder);
-  const memberId = member.id as number;
-  const fallbackOrder = fallbackOrderById?.get(memberId);
-  const displayOrder = Number.isFinite(parsedOrder)
-    ? parsedOrder
-    : Number.isFinite(fallbackOrder)
-      ? fallbackOrder
-      : undefined;
-  return {
-    id: memberId,
-    name: member.name as string,
-    role: (member.role as string) ?? "",
-    image: (member.image as string) ?? "",
-    displayOrder,
-  };
-};
-
-const sortTeamMembersByOrder = (members: TeamMember[]) =>
-  [...members].sort((a, b) => {
-    const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : Number.MAX_SAFE_INTEGER;
-    const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : Number.MAX_SAFE_INTEGER;
-    if (orderA !== orderB) return orderA - orderB;
-    return a.id - b.id;
-  });
 
 // Transform API data from snake_case to camelCase
 const transformProjectFromAPI = (project: Record<string, unknown>): PortfolioProject => ({
@@ -113,26 +66,38 @@ const transformProjectFromAPI = (project: Record<string, unknown>): PortfolioPro
   sourceCodeUrl: (project.source_code_url || project.sourceCodeUrl || "") as string,
 });
 
-// Helper function to ensure image is in base64 format
-const ensureBase64Image = async (imageSrc: string): Promise<string> => {
+// Helper function to handle image format (base64, Cloudinary URL, or local)
+const getImageForDisplay = (imageSrc: string): string => {
   if (!imageSrc) return "";
   
-  // If already base64, return as-is
-  if (isBase64DataURI(imageSrc)) {
+  // Keep Cloudinary URLs as-is
+  if (imageSrc.includes('cloudinary.com')) {
+    return imageSrc;
+  }
+  
+  // Keep base64 data as-is
+  if (imageSrc.startsWith('data:image/')) {
     return imageSrc;
   }
 
-  try {
-    // Convert file path or URL to base64
-    return await convertToBase64(imageSrc);
-  } catch (error) {
-    console.error('Error converting image to base64:', error);
-    return imageSrc; // Return original if conversion fails
+  // For storage keys or other formats, return a placeholder
+  if (imageSrc.startsWith('storage:')) {
+    return "/img/placeholder.jpg";
   }
+  
+  // Return as-is for other URLs
+  return imageSrc;
 };
 
 const Admin = () => {
-  const { uploadImage: uploadToLocalStorage, uploading: isUploading, uploadError } = useLocalStorageUpload();
+  const { 
+    uploadImage, 
+    uploading: isUploading, 
+    uploadError
+  } = useCloudinaryUpload();
+  
+  const { isBase64DataURI, migrateBase64ToCloudinary } = useCloudinaryMigration();
+  
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
@@ -141,24 +106,18 @@ const Admin = () => {
     getPortfolioProjects()
   );
   const [clients, setClientList] = useState<Client[]>(() => getClients());
-  const [teamMembers, setTeamMembersList] = useState<TeamMember[]>(() =>
-    getTeamMembers()
-  );
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
   const [editingClientId, setEditingClientId] = useState<number | null>(null);
-  const [editingTeamId, setEditingTeamId] = useState<number | null>(null);
   const [projectForm, setProjectForm] = useState(emptyProjectForm);
   const [clientForm, setClientForm] = useState(emptyClientForm);
-  const [teamForm, setTeamForm] = useState(emptyTeamForm);
 
   useEffect(() => {
     const loadDataFromAPI = async () => {
       try {
         const apiUrl = getApiUrl();
-        const [projectsRes, clientsRes, teamRes] = await Promise.all([
+        const [projectsRes, clientsRes] = await Promise.all([
           fetch(`${apiUrl}/api/projects`),
           fetch(`${apiUrl}/api/clients`),
-          fetch(`${apiUrl}/api/team`),
         ]);
 
         if (projectsRes.ok) {
@@ -166,21 +125,14 @@ const Admin = () => {
           // Transform API data from snake_case to camelCase
           const transformedProjects = projectsData.map(transformProjectFromAPI);
           
-          // Convert all images to base64 if not already
-          const projectsWithBase64 = await Promise.all(
-            transformedProjects.map(async (project) => {
-              if (project.image && !isBase64DataURI(project.image)) {
-                return {
-                  ...project,
-                  image: await ensureBase64Image(project.image).catch(() => project.image),
-                };
-              }
-              return project;
-            })
-          );
+          // Process images for display
+          const projectsWithImages = transformedProjects.map((project) => ({
+            ...project,
+            image: getImageForDisplay(project.image),
+          }));
           
-          setProjects(projectsWithBase64);
-          setPortfolioProjects(projectsWithBase64, false);
+          setProjects(projectsWithImages);
+          setPortfolioProjects(projectsWithImages, false);
         } else {
           // Fallback to localStorage if API fails
           setProjects(getPortfolioProjects());
@@ -190,57 +142,20 @@ const Admin = () => {
           const clientsData = await clientsRes.json();
           
           // Convert all client images to base64 if not already
-          const clientsWithBase64 = await Promise.all(
-            clientsData.map(async (client: Client) => {
-              if (client.image && !isBase64DataURI(client.image)) {
-                return {
-                  ...client,
-                  image: await ensureBase64Image(client.image).catch(() => client.image),
-                };
-              }
-              return client;
-            })
-          );
+          const clientsWithImages = clientsData.map((client: Client) => ({
+            ...client,
+            image: getImageForDisplay(client.image),
+          }));
           
-          setClientList(clientsWithBase64);
-          setClients(clientsWithBase64, false);
+          setClientList(clientsWithImages);
+          setClients(clientsWithImages, false);
         } else {
           setClientList(getClients());
-        }
-
-        if (teamRes.ok) {
-          const teamData = await teamRes.json();
-          const storedTeam = getTeamMembers();
-          const fallbackOrderById = new Map(
-            storedTeam.map((member) => [member.id, member.displayOrder])
-          );
-          const normalizedTeam = teamData.map((member: Record<string, unknown>) =>
-            normalizeTeamMemberFromApi(member, fallbackOrderById)
-          );
-          
-          // Convert all team member images to base64 if not already
-          const teamWithBase64 = await Promise.all(
-            normalizedTeam.map(async (member) => {
-              if (member.image && !isBase64DataURI(member.image)) {
-                return {
-                  ...member,
-                  image: await ensureBase64Image(member.image).catch(() => member.image),
-                };
-              }
-              return member;
-            })
-          );
-          
-          setTeamMembersList(teamWithBase64);
-          setTeamMembers(teamWithBase64);
-        } else {
-          setTeamMembersList(getTeamMembers());
         }
       } catch (error) {
         console.error('Error loading data from API, using localStorage:', error);
         setProjects(getPortfolioProjects());
         setClientList(getClients());
-        setTeamMembersList(getTeamMembers());
       }
     };
 
@@ -260,11 +175,6 @@ const Admin = () => {
   const resetClientForm = () => {
     setEditingClientId(null);
     setClientForm(emptyClientForm);
-  };
-
-  const resetTeamForm = () => {
-    setEditingTeamId(null);
-    setTeamForm(emptyTeamForm);
   };
 
   const handleAuthSubmit = (event: FormEvent) => {
@@ -288,21 +198,22 @@ const Admin = () => {
   const handleProjectSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
-    if (!projectForm.title.trim()) return;
+    const title = String(projectForm.title || "").trim();
+    if (!title) return;
 
     const projectData = {
-      title: projectForm.title.trim(),
-      category: projectForm.category.trim() || "Uncategorized",
-      description: projectForm.description.trim(),
-      fullDescription: projectForm.fullDescription.trim(),
-      image: projectForm.image.trim(),
+      title,
+      category: String(projectForm.category || "").trim() || "Uncategorized",
+      description: String(projectForm.description || "").trim(),
+      fullDescription: String(projectForm.fullDescription || "").trim(),
+      image: String(projectForm.image || "").trim(),
       tags: toList(projectForm.tags),
       features: toList(projectForm.features),
       technologies: toList(projectForm.technologies),
-      year: projectForm.year.trim(),
-      client: projectForm.client.trim(),
-      liveUrl: projectForm.liveUrl.trim() || undefined,
-      sourceCodeUrl: projectForm.sourceCodeUrl.trim() || undefined,
+      year: String(projectForm.year || "").trim(),
+      client: String(projectForm.client || "").trim(),
+      liveUrl: String(projectForm.liveUrl || "").trim() || undefined,
+      sourceCodeUrl: String(projectForm.sourceCodeUrl || "").trim() || undefined,
     };
 
     try {
@@ -362,34 +273,34 @@ const Admin = () => {
       sourceCodeUrl: project.sourceCodeUrl || "",
     });
     
-    // Convert image to base64 if not already
-    if (project.image && !isBase64DataURI(project.image)) {
-      ensureBase64Image(project.image).then(base64Image => {
-        setProjectForm(prev => ({
-          ...prev,
-          image: base64Image,
-        }));
-      });
-    }
+    // Use image as-is (Cloudinary URLs or base64 data)
+    // No conversion needed anymore since we store Cloudinary URLs in DB
   };
 
   const handleProjectImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setUploadMessage("Uploading image to local storage...");
-    // Use project title as the image name (sanitized)
-    const projectName = projectForm.title.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    const storageKey = await uploadToLocalStorage(file, 'netcraft-studio/projects', projectName);
-    if (storageKey) {
-      setProjectForm((prev) => ({
-        ...prev,
-        image: storageKey,
-      }));
-      setUploadMessage("Image uploaded successfully to local storage!");
-      setTimeout(() => setUploadMessage(null), 3000);
-    } else {
-      setUploadMessage(`Upload failed: ${uploadError}`);
+    setUploadMessage("Uploading image to Cloudinary...");
+    try {
+      // Use project title as the image name (sanitized)
+      const projectName = String(projectForm.title || "").trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      const cloudinaryUrl = await uploadImage(file, 'netcraft-studio/projects', projectName);
+      
+      if (cloudinaryUrl) {
+        setProjectForm((prev) => ({
+          ...prev,
+          image: cloudinaryUrl,
+        }));
+        setUploadMessage(`Image uploaded to Cloudinary successfully! Now web-accessible.`);
+        setTimeout(() => setUploadMessage(null), 5000);
+      } else {
+        setUploadMessage(`Upload failed: ${uploadError}`);
+        setTimeout(() => setUploadMessage(null), 3000);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setUploadMessage(`Upload failed: ${errorMessage}`);
       setTimeout(() => setUploadMessage(null), 3000);
     }
   };
@@ -420,12 +331,13 @@ const Admin = () => {
   const handleClientSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
-    if (!clientForm.name.trim()) return;
+    const name = String(clientForm.name || "").trim();
+    if (!name) return;
 
     const clientData = {
-      name: clientForm.name.trim(),
-      image: clientForm.image.trim(),
-      alt: clientForm.alt.trim() || clientForm.name.trim(),
+      name,
+      image: String(clientForm.image || "").trim(),
+      alt: String(clientForm.alt || "").trim() || name,
     };
 
     try {
@@ -475,34 +387,34 @@ const Admin = () => {
       alt: client.alt ?? "",
     });
     
-    // Convert image to base64 if not already
-    if (client.image && !isBase64DataURI(client.image)) {
-      ensureBase64Image(client.image).then(base64Image => {
-        setClientForm(prev => ({
-          ...prev,
-          image: base64Image,
-        }));
-      });
-    }
+    // Use image as-is (Cloudinary URLs or base64 data)
+    // No conversion needed anymore since we store Cloudinary URLs in DB
   };
 
   const handleClientImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setUploadMessage("Uploading image to local storage...");
-    // Use client name as the image name (sanitized)
-    const clientName = clientForm.name.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    const storageKey = await uploadToLocalStorage(file, 'netcraft-studio/clients', clientName);
-    if (storageKey) {
-      setClientForm((prev) => ({
-        ...prev,
-        image: storageKey,
-      }));
-      setUploadMessage("Image uploaded successfully to local storage!");
-      setTimeout(() => setUploadMessage(null), 3000);
-    } else {
-      setUploadMessage(`Upload failed: ${uploadError}`);
+    setUploadMessage("Uploading image to Cloudinary...");
+    try {
+      // Use client name as the image name (sanitized)
+      const clientName = String(clientForm.name || "").trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      const cloudinaryUrl = await uploadImage(file, 'netcraft-studio/clients', clientName);
+      
+      if (cloudinaryUrl) {
+        setClientForm((prev) => ({
+          ...prev,
+          image: cloudinaryUrl,
+        }));
+        setUploadMessage(`Image uploaded to Cloudinary successfully! Now web-accessible.`);
+        setTimeout(() => setUploadMessage(null), 5000);
+      } else {
+        setUploadMessage(`Upload failed: ${uploadError}`);
+        setTimeout(() => setUploadMessage(null), 3000);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setUploadMessage(`Upload failed: ${errorMessage}`);
       setTimeout(() => setUploadMessage(null), 3000);
     }
   };
@@ -527,128 +439,6 @@ const Admin = () => {
       }
     } catch (error) {
       console.error('Error deleting client:', error);
-    }
-  };
-
-  const handleTeamSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-
-    if (!teamForm.name.trim()) return;
-
-    const teamData = {
-      name: teamForm.name.trim(),
-      role: teamForm.role.trim() || "Team Member",
-      image: teamForm.image.trim(),
-      displayOrder: parseOrderInput(teamForm.displayOrder),
-    };
-
-    try {
-      const apiUrl = getApiUrl();
-      let response;
-      if (editingTeamId) {
-        // Update existing team member
-        response = await fetch(`${apiUrl}/api/team/${editingTeamId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(teamData),
-        });
-      } else {
-        // Create new team member
-        response = await fetch(`${apiUrl}/api/team`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(teamData),
-        });
-      }
-
-      if (!response.ok) {
-        console.error('Failed to save team member');
-        return;
-      }
-
-      const savedMember = await response.json();
-      const nextMember = {
-        ...savedMember,
-        id: savedMember.id,
-        displayOrder: teamData.displayOrder ?? savedMember.displayOrder,
-      } as TeamMember;
-      const nextTeam = editingTeamId
-        ? teamMembers.map((member) =>
-            member.id === editingTeamId ? nextMember : member
-          )
-        : [...teamMembers, nextMember];
-
-      setTeamMembers(nextTeam);
-      setTeamMembersList(nextTeam);
-      resetTeamForm();
-    } catch (error) {
-      console.error('Error saving team member:', error);
-    }
-  };
-
-  const handleTeamEdit = (member: TeamMember) => {
-    setEditingTeamId(member.id);
-    setTeamForm({
-      name: member.name,
-      role: member.role,
-      image: member.image,
-      displayOrder: Number.isFinite(member.displayOrder)
-        ? String(member.displayOrder)
-        : "",
-    });
-    
-    // Convert image to base64 if not already
-    if (member.image && !isBase64DataURI(member.image)) {
-      ensureBase64Image(member.image).then(base64Image => {
-        setTeamForm(prev => ({
-          ...prev,
-          image: base64Image,
-        }));
-      });
-    }
-  };
-
-  const handleTeamImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setUploadMessage("Uploading image to local storage...");
-    // Use team member name as the image name (sanitized)
-    const memberName = teamForm.name.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    const storageKey = await uploadToLocalStorage(file, 'netcraft-studio/team', memberName);
-    if (storageKey) {
-      setTeamForm((prev) => ({
-        ...prev,
-        image: storageKey,
-      }));
-      setUploadMessage("Image uploaded successfully to local storage!");
-      setTimeout(() => setUploadMessage(null), 3000);
-    } else {
-      setUploadMessage(`Upload failed: ${uploadError}`);
-      setTimeout(() => setUploadMessage(null), 3000);
-    }
-  };
-
-  const handleTeamDelete = async (memberId: number) => {
-    try {
-      const apiUrl = getApiUrl();
-      const response = await fetch(`${apiUrl}/api/team/${memberId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        console.error('Failed to delete team member');
-        return;
-      }
-
-      const nextTeam = teamMembers.filter((member) => member.id !== memberId);
-      setTeamMembers(nextTeam);
-      setTeamMembersList(nextTeam);
-      if (editingTeamId === memberId) {
-        resetTeamForm();
-      }
-    } catch (error) {
-      console.error('Error deleting team member:', error);
     }
   };
 
@@ -1116,156 +906,6 @@ const Admin = () => {
           </div>
         </section>
 
-        <section className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-8 items-start">
-            <div className="gta-card p-6 space-y-4">
-              <h2 className="text-xl font-display font-bold">Meet the Team</h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {sortTeamMembersByOrder(teamMembers).map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-start justify-between gap-4 p-3 rounded-lg bg-muted/30"
-                  >
-                    <div className="space-y-1">
-                      <p className="font-display text-base text-foreground">
-                        {member.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {member.role}
-                        {Number.isFinite(member.displayOrder)
-                          ? ` • Order ${member.displayOrder}`
-                          : ""}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleTeamEdit(member)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleTeamDelete(member.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <form onSubmit={handleTeamSubmit} className="gta-card p-6 space-y-4">
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-xl font-display font-bold">
-                  {editingTeamId ? "Edit Team Member" : "Add Team Member"}
-                </h2>
-                <Button type="button" variant="outline" onClick={resetTeamForm}>
-                  Clear
-                </Button>
-              </div>
-
-              <div className="grid gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="team-name">Name</Label>
-                  <Input
-                    id="team-name"
-                    value={teamForm.name}
-                    onChange={(event) =>
-                      setTeamForm((prev) => ({
-                        ...prev,
-                        name: event.target.value,
-                      }))
-                    }
-                    placeholder="Team member name"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="team-role">Role</Label>
-                  <Input
-                    id="team-role"
-                    value={teamForm.role}
-                    onChange={(event) =>
-                      setTeamForm((prev) => ({
-                        ...prev,
-                        role: event.target.value,
-                      }))
-                    }
-                    placeholder="Role / title"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="team-order">Display Order</Label>
-                  <Input
-                    id="team-order"
-                    type="number"
-                    min="1"
-                    value={teamForm.displayOrder}
-                    onChange={(event) =>
-                      setTeamForm((prev) => ({
-                        ...prev,
-                        displayOrder: event.target.value,
-                      }))
-                    }
-                    placeholder="1"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Lower numbers appear first. Leave empty to keep default order.
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="team-image">Image URL</Label>
-                  <Input
-                    id="team-image"
-                    value={teamForm.image}
-                    onChange={(event) =>
-                      setTeamForm((prev) => ({
-                        ...prev,
-                        image: event.target.value,
-                      }))
-                    }
-                    placeholder="/src/assets/team/name.jpg or data:image/..."
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Use a public URL, /img/team/... from public folder, or upload base64 image below.
-                  </p>
-                  {teamForm.image ? (
-                    <div className="mt-2 rounded-lg border border-border/50 bg-muted/20 p-2">
-                      <img
-                        src={teamForm.image}
-                        alt="Team member preview"
-                        className="h-24 w-full object-contain"
-                        loading="lazy"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="team-image-upload">Upload Image</Label>
-                  <Input
-                    id="team-image-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleTeamImageUpload}
-                    disabled={isUploading}
-                  />
-                  {isUploading && <p className="text-sm text-blue-500">Uploading image...</p>}
-                  {uploadMessage && <p className="text-sm text-green-500">{uploadMessage}</p>}
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full">
-                {editingTeamId ? "Update Member" : "Add Member"}
-              </Button>
-            </form>
-          </div>
-        </section>
       </main>
 
       <Footer />

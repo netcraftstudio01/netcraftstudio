@@ -21,6 +21,59 @@ cloudinary.config({
 
 const app = express();
 
+// Simple rate limiting middleware to prevent DB pool exhaustion
+const activeRequests = new Map();
+const maxConcurrentRequests = 2; // Limited for Supabase
+const requestQueue = [];
+
+const rateLimitMiddleware = (req, res, next) => {
+  // Only apply to API routes that hit the database
+  if (!req.path.startsWith('/api/') || req.path === '/api/send-email' || req.path === '/api/upload') {
+    return next();
+  }
+
+  const clientId = req.ip || 'unknown';
+  const currentRequests = activeRequests.get(clientId) || 0;
+  
+  // Log current status
+  const totalActive = Array.from(activeRequests.values()).reduce((sum, count) => sum + count, 0);
+  console.log(`🚦 Rate limit check - Active: ${totalActive}/${maxConcurrentRequests}, Queue: ${requestQueue.length}, Path: ${req.path}`);
+  
+  if (totalActive >= maxConcurrentRequests) {
+    // Queue the request
+    requestQueue.push({ req, res, next, clientId });
+    console.log(`⏳ Request queued. Queue size: ${requestQueue.length}`);
+    return;
+  }
+
+  // Process the request
+  activeRequests.set(clientId, currentRequests + 1);
+  console.log(`▶️  Processing request: ${req.method} ${req.path}`);
+  
+  // Wrap res.end to clean up when request completes
+  const originalEnd = res.end;
+  res.end = function(...args) {
+    const current = activeRequests.get(clientId) || 1;
+    activeRequests.set(clientId, current - 1);
+    if (current <= 1) activeRequests.delete(clientId);
+    
+    console.log(`✅ Request completed: ${req.method} ${req.path}`);
+    
+    // Process next queued request if any
+    if (requestQueue.length > 0) {
+      const queued = requestQueue.shift();
+      console.log(`🚀 Processing queued request. Queue size: ${requestQueue.length}`);
+      setImmediate(() => rateLimitMiddleware(queued.req, queued.res, queued.next));
+    }
+    
+    return originalEnd.apply(this, args);
+  };
+  
+  next();
+};
+
+app.use(rateLimitMiddleware);
+
 // Middleware - CORS Configuration
 // In development: Vite proxy handles CORS, so we allow localhost
 // In production: Same server serves front & backend, CORS not needed
@@ -224,16 +277,26 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 Server running on port ${PORT}`);
-  console.log(`✓ Email service configured`);
-  console.log(`✓ Cloudinary upload configured`);
-  console.log(`✓ Database routes available at /api/projects, /api/clients, /api/team`);
-  console.log(`✓ Upload endpoint available at /api/upload`);
-  console.log(`✓ Health check available at /api/health\n`);
-  console.log(`Make sure .env file is configured with:`);
-  console.log(`  - EMAIL_USER and EMAIL_PASSWORD`);
-  console.log(`  - Database credentials (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)`);
-  console.log(`  - Cloudinary credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)\n`);
-});
+// Initialize database connection pool before starting server
+(async () => {
+  try {
+    console.log('🔄 Initializing database connection pool...');
+    await initializeDatabase();
+    console.log('✅ Database connection pool initialized successfully');
+    
+    app.listen(PORT, () => {
+      console.log(`\n🚀 Server running on port ${PORT}`);
+      console.log(`✓ Email service configured`);
+      console.log(`✓ Cloudinary upload configured`);
+      console.log(`✓ Database connection pool ready`);
+      console.log(`✓ Database routes available at /api/projects, /api/clients, /api/team`);
+      console.log(`✓ Upload endpoint available at /api/upload`);
+      console.log(`✓ Health check available at /api/health\n`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to initialize database:', error);
+    console.error('💡 Please check your database credentials in .env file');
+    process.exit(1);
+  }
+})();
 

@@ -3,10 +3,16 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// Get all clients
+// Get all clients - optimized with caching
 router.get('/', async (req, res) => {
   try {
-    const result = await query('SELECT * FROM clients ORDER BY created_at DESC');
+    // Select only required fields: id, name, image, alt
+    const result = await query('SELECT id, name, image, alt FROM clients ORDER BY created_at DESC');
+    
+    // Set cache headers (cache for 10 minutes - client data changes less frequently)
+    res.set('Cache-Control', 'public, max-age=600');
+    res.set('ETag', `W/"clients-${result.rows.length}-${Date.now()}"`);
+    
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching clients:', error);

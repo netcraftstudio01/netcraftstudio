@@ -3,10 +3,16 @@ import { query } from '../config/database.js';
 
 const router = express.Router();
 
-// Get all team members
+// Get all team members - optimized with caching
 router.get('/', async (req, res) => {
   try {
-    const result = await query('SELECT * FROM team_members ORDER BY display_order ASC NULLS LAST, created_at DESC');
+    // Select only required fields: id, name, role, image, display_order
+    const result = await query('SELECT id, name, role, image, display_order FROM team_members ORDER BY display_order ASC NULLS LAST, created_at DESC');
+    
+    // Set cache headers (cache for 10 minutes)
+    res.set('Cache-Control', 'public, max-age=600');
+    res.set('ETag', `W/"team-${result.rows.length}-${Date.now()}"`);
+    
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching team members:', error);

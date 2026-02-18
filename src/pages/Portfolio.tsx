@@ -5,6 +5,8 @@ import Footer from "@/components/layout/Footer";
 import portfolioBg from "@/assets/portfolio-bg.jpg";
 import { ExternalLink, Github, X, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import SmartImage from "@/components/ui/smart-image";
 import { usePortfolioData } from "@/hooks/usePortfolioData";
 import {
   getPortfolioCategories,
@@ -28,8 +30,8 @@ const ProjectCard = forwardRef<
         className="gta-card group overflow-hidden cursor-pointer"
         onClick={() => onOpenDetail(project)}
       >
-      <div className="relative aspect-video overflow-hidden">
-        <img
+      <div className="relative aspect-video overflow-hidden bg-muted">
+        <SmartImage
           src={project.image}
           alt={project.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
@@ -237,7 +239,7 @@ const ProjectDetailModal = ({
 };
 
 const Portfolio = () => {
-  const { projects: dbProjects, loading, error } = usePortfolioData();
+  const { projects: dbProjects, loading, error } = usePortfolioData({ fetchProjects: true });
   const [activeCategory, setActiveCategory] = useState("All");
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(
