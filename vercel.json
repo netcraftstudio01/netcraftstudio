@@ -5,14 +5,9 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "build": {
-    "env": {
-      "NODEJS_VERSION": "18.x"
-    }
-  },
   "functions": {
     "api/**/*.ts": {
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs24.x"
     }
   },
   "rewrites": [
